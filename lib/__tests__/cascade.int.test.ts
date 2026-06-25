@@ -24,6 +24,20 @@ beforeAll(async () => {
     INSERT INTO app.bu VALUES (1,'BU1');
     INSERT INTO app.role VALUES (10,1),(11,1);
     INSERT INTO app.perm VALUES (100,10),(101,11);
+
+    -- C1: non-PK referenced FK tables
+    CREATE TABLE app.org (id int primary key, code text UNIQUE);
+    CREATE TABLE app.member (id int primary key, org_code text references app.org(code));
+    INSERT INTO app.org VALUES (1, 'ORG1');
+    INSERT INTO app.member VALUES (10, 'ORG1');
+
+    -- C2: 2-table FK cycle with nullable back-references
+    CREATE TABLE app.aa (id int primary key, bb_id int);
+    CREATE TABLE app.bb (id int primary key, aa_id int references app.aa(id));
+    ALTER TABLE app.aa ADD CONSTRAINT aa_bb_fk FOREIGN KEY (bb_id) REFERENCES app.bb(id);
+    INSERT INTO app.aa VALUES (1, NULL);
+    INSERT INTO app.bb VALUES (1, 1);
+    UPDATE app.aa SET bb_id = 1 WHERE id = 1;
   `);
   const { ensureAuditTable } = await import("@/lib/audit");
   await ensureAuditTable();
@@ -48,4 +62,21 @@ test("executeCascade deletes children-first without FK error", async () => {
   const { listAudit } = await import("@/lib/audit");
   const audit = await listAudit({ operation: "CASCADE_DELETE", limit: 10 });
   expect(audit.length).toBe(5);
+});
+
+// C1: non-PK referenced FK — member FK references org.code (UNIQUE, not PK)
+test("computeBlastRadius follows FK referencing a non-PK unique column (C1)", async () => {
+  const { computeBlastRadius } = await import("@/lib/cascade");
+  const r = await computeBlastRadius("app", "org", { id: 1 });
+  // Should include the org row itself + the member row that references via org.code
+  expect(r.rows.length).toBe(2);
+  const tableNames = r.rows.map((row) => row.table).sort();
+  expect(tableNames).toContain("org");
+  expect(tableNames).toContain("member");
+});
+
+// C2: FK cycle between aa and bb — executeCascade must refuse with a cycle error
+test("executeCascade refuses to cascade when tables form an FK cycle (C2)", async () => {
+  const { executeCascade } = await import("@/lib/cascade");
+  await expect(executeCascade("app", "aa", { id: 1 }, {})).rejects.toThrow(/cycle/i);
 });

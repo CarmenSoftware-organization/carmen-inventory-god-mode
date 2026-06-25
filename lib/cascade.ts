@@ -4,7 +4,7 @@ import { orderTablesForDeletion, type TableRef } from "@/lib/topo";
 import { ident, qualified } from "@/lib/sql-guard";
 import { env } from "@/lib/env";
 import { writeAudit } from "@/lib/audit";
-import { currentActor } from "@/lib/write";
+import { currentActor, whereFromPk } from "@/lib/write";
 
 export type CascadeRow = { schema: string; table: string; pk: Record<string, unknown>; depth: number };
 export type BlastRadius = { rows: CascadeRow[]; byTable: Array<{ schema: string; table: string; count: number }>; maxDepth: number; truncated: boolean };
@@ -47,7 +47,24 @@ export async function computeBlastRadius(schema: string, table: string, pk: Reco
       const childPk = await pkCols(f.childSchema, f.childTable);
       if (childPk.length === 0) continue; // can't address rows without a pk
       const whereParts = f.childColumns.map((c, i) => `${ident(c)} = $${i + 1}`);
-      const args = f.parentColumns.map((pc) => node.pk[pc]);
+      // C1 fix: if the FK references a non-PK unique column, node.pk won't have those values.
+      // Fast path: all parentColumns are present in node.pk.
+      let refValues: unknown[];
+      const allInPk = f.parentColumns.every((pc) => pc in node.pk);
+      if (allInPk) {
+        refValues = f.parentColumns.map((pc) => node.pk[pc]);
+      } else {
+        // Slow path: SELECT the referenced columns from the parent row using the PK.
+        const { clause: pkClause, args: pkArgs } = whereFromPk(node.pk, 1);
+        const selectCols = f.parentColumns.map(ident).join(", ");
+        const refRows = await getSql().unsafe(
+          `SELECT ${selectCols} FROM ${qualified(node.schema, node.table)} WHERE ${pkClause} LIMIT 1`,
+          pkArgs as any[],
+        ) as Record<string, unknown>[];
+        if (refRows.length === 0) continue; // parent row doesn't exist, skip
+        refValues = f.parentColumns.map((pc) => refRows[0][pc]);
+      }
+      const args = refValues;
       const selectPk = childPk.map(ident).join(", ");
       const found = await getSql().unsafe(
         `SELECT ${selectPk} FROM ${qualified(f.childSchema, f.childTable)} WHERE ${whereParts.join(" AND ")}`, args as any[],
@@ -87,7 +104,16 @@ export async function executeCascade(
     .map((k) => { const [s, t] = k.split("."); return { schema: s, table: t }; });
   const allFks: ForeignKey[] = [];
   for (const s of new Set(involvedTables.map((t) => t.schema))) allFks.push(...await listForeignKeys(s));
-  const { order } = orderTablesForDeletion(involvedTables, allFks);
+  const { order, cycles } = orderTablesForDeletion(involvedTables, allFks);
+
+  // C2 fix: if a genuine multi-table FK cycle exists, refuse to proceed (fail-safe).
+  if (cycles.length > 0) {
+    throw new Error(
+      "Cannot cascade: foreign-key cycle among tables " +
+      cycles.flat().join(", ") +
+      " (NO ACTION FKs cannot be deleted in any order). Resolve manually.",
+    );
+  }
 
   const rowsByTable = new Map<string, CascadeRow[]>();
   for (const r of radius.rows) {
