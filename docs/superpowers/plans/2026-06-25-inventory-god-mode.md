@@ -314,8 +314,8 @@ git commit -m "feat: identifier guard and statement classifier"
 
 **Files:**
 - Create: `lib/db.ts`
-- Test: `lib/__tests__/db.int.test.ts` (integration — Testcontainers)
-- Create: `test/pg.ts` (shared Testcontainers helper)
+- Test: `lib/__tests__/db.int.test.ts` (integration — embedded-postgres)
+- Create: `test/pg.ts` (shared embedded-postgres helper)
 
 **Interfaces:**
 - Consumes: `ident`, `qualified` (Task 3); `env` (Task 2).
@@ -2603,7 +2603,7 @@ permanent — there is no undo.** The audit log is the only recovery record.
 4. `npm run dev`
 
 ## Tests
-- `npm test` — unit + integration (integration needs Docker for Testcontainers).
+- `npm test` — unit + integration (integration uses embedded-postgres; no Docker needed).
 - `npx playwright test` — light E2E.
 
 ## Safety
@@ -2634,7 +2634,7 @@ git commit -m "test: e2e smoke + operator README"
 - Operations: UPDATE/INSERT (Task 14), single DELETE (Task 13), cascade DELETE (Tasks 15–17), raw SQL (Task 18). ✓
 - Cascade via runtime FK introspection, children-first, one txn, optional DROP SCHEMA, per-deletion checkbox → Tasks 16–17. ✓
 - One DB / many schemas, PgBouncer `prepare:false`, identifier guard → Tasks 3–4, Global Constraints. ✓
-- Audit viewer → Task 19. Schema banner → Task 8. Error handling = surface real PG errors (SQL console + actions throw raw messages) → Tasks 17–18. Testing strategy → unit + Testcontainers integration + Playwright throughout. Config/env → Task 2. ✓
+- Audit viewer → Task 19. Schema banner → Task 8. Error handling = surface real PG errors (SQL console + actions throw raw messages) → Tasks 17–18. Testing strategy → unit + embedded-postgres integration + Playwright throughout. Config/env → Task 2. ✓
 - Out-of-scope items intentionally absent. ✓
 
 **Placeholder scan:** No TBD/TODO; every code step contains runnable code. ✓
