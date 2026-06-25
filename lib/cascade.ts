@@ -103,11 +103,9 @@ export async function computeBlastRadiusMany(schema: string, table: string, pks:
   return { rows, byTable, maxDepth: maxDepthSeen, truncated };
 }
 
-export async function executeCascade(
-  schema: string, table: string, pk: Record<string, unknown>, opts: { dropTenantSchema?: string | null },
+async function deleteRadius(
+  actor: string, radius: BlastRadius, opts: { dropTenantSchema?: string | null },
 ): Promise<{ deleted: number; droppedSchema: string | null }> {
-  const actor = await currentActor();
-  const radius = await computeBlastRadius(schema, table, pk);
   if (radius.truncated) throw new Error("Blast radius exceeds configured caps; refusing to cascade. Raise CASCADE_MAX_ROWS/DEPTH or narrow the target.");
 
   const involvedTables: TableRef[] = [...new Set(radius.rows.map((r) => `${r.schema}.${r.table}`))]
@@ -116,7 +114,7 @@ export async function executeCascade(
   for (const s of new Set(involvedTables.map((t) => t.schema))) allFks.push(...await listForeignKeys(s));
   const { order, cycles } = orderTablesForDeletion(involvedTables, allFks);
 
-  // C2 fix: if a genuine multi-table FK cycle exists, refuse to proceed (fail-safe).
+  // If a genuine multi-table FK cycle exists, refuse to proceed (fail-safe).
   if (cycles.length > 0) {
     throw new Error(
       "Cannot cascade: foreign-key cycle among tables " +
@@ -156,4 +154,21 @@ export async function executeCascade(
     }
     return { deleted, droppedSchema };
   });
+}
+
+export async function executeCascade(
+  schema: string, table: string, pk: Record<string, unknown>, opts: { dropTenantSchema?: string | null },
+): Promise<{ deleted: number; droppedSchema: string | null }> {
+  const actor = await currentActor();
+  const radius = await computeBlastRadius(schema, table, pk);
+  return deleteRadius(actor, radius, opts);
+}
+
+export async function executeCascadeMany(
+  schema: string, table: string, pks: Record<string, unknown>[],
+): Promise<{ deleted: number }> {
+  const actor = await currentActor();
+  const radius = await computeBlastRadiusMany(schema, table, pks);
+  const { deleted } = await deleteRadius(actor, radius, { dropTenantSchema: null });
+  return { deleted };
 }

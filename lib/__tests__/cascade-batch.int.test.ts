@@ -58,3 +58,35 @@ test("computeBlastRadiusMany dedups identical seeds", async () => {
   // role10 + perm100 only, the duplicate seed is ignored
   expect(r.rows.length).toBe(2);
 });
+
+test("executeCascadeMany refuses on FK cycle and deletes nothing", async () => {
+  const { executeCascadeMany } = await import("@/lib/cascade");
+  const { getSql } = await import("@/lib/db");
+  await expect(executeCascadeMany("app", "aa", [{ id: 1 }])).rejects.toThrow(/cycle/i);
+  const left = await getSql().unsafe(`SELECT count(*)::int n FROM app.aa`);
+  expect(left[0].n).toBe(1);
+});
+
+test("executeCascadeMany rolls back the whole batch if any delete fails", async () => {
+  // app.iso_child has no PK, so it is not in the blast radius and is never deleted;
+  // deleting app.iso then violates iso_child's FK, which must abort the transaction.
+  const { executeCascadeMany } = await import("@/lib/cascade");
+  const { getSql } = await import("@/lib/db");
+  await expect(executeCascadeMany("app", "iso", [{ id: 1 }])).rejects.toThrow();
+  const left = await getSql().unsafe(`SELECT count(*)::int n FROM app.iso`);
+  expect(left[0].n).toBe(1); // unchanged — rolled back
+});
+
+test("executeCascadeMany deletes all selected subtrees and audits each row", async () => {
+  const { executeCascadeMany } = await import("@/lib/cascade");
+  const { getSql } = await import("@/lib/db");
+  const res = await executeCascadeMany("app", "bu", [{ id: 1 }, { id: 2 }]);
+  expect(res.deleted).toBe(8);
+  for (const t of ["bu", "role", "perm"]) {
+    const left = await getSql().unsafe(`SELECT count(*)::int n FROM app.${t}`);
+    expect(left[0].n).toBe(0);
+  }
+  const { listAudit } = await import("@/lib/audit");
+  const audit = await listAudit({ operation: "CASCADE_DELETE", limit: 50 });
+  expect(audit.length).toBe(8);
+});
