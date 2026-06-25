@@ -20,6 +20,10 @@ export async function confirmDelete(schema: string, table: string, pkJson: strin
     throw new Error(`Confirmation text must equal "${phrase}"`);
   }
   await executeCascade(schema, table, pk, { dropTenantSchema: dropSchema });
+  if (isBusinessUnit) {
+    revalidatePath("/schemas");
+    redirect("/schemas");
+  }
   revalidatePath(`/${schema}/${table}`);
   redirect(`/${encodeURIComponent(schema)}/${encodeURIComponent(table)}`);
 }

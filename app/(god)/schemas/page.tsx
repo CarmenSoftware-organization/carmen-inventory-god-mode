@@ -25,8 +25,14 @@ export default async function SchemasPage() {
                 <td>{b.name}</td>
                 <td>{b.isActive ? "yes" : "no"}</td>
                 <td>{b.tenantSchema ?? <span className="rounded bg-gray-200 px-2 text-xs">no schema</span>}</td>
-                <td className="text-right">
+                <td className="space-x-3 text-right">
                   {b.tenantSchema && <Link href={`/${encodeURIComponent(b.tenantSchema)}/tables`} className="text-blue-600">open →</Link>}
+                  <Link
+                    href={`/${encodeURIComponent(sel.system)}/tb_business_unit/delete?pk=${encodeURIComponent(JSON.stringify({ id: b.id }))}`}
+                    className="text-red-600"
+                  >
+                    delete
+                  </Link>
                 </td>
               </tr>
             ))}
