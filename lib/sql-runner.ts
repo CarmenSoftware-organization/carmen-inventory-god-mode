@@ -1,0 +1,42 @@
+import { withTransaction } from "@/lib/db";
+import { writeAudit } from "@/lib/audit";
+import { currentActor } from "@/lib/write";
+
+export type SqlResult =
+  | { kind: "read"; columns: string[]; rows: Record<string, unknown>[]; rowCount: number }
+  | { kind: "write-preview"; affected: number }
+  | { kind: "write-applied"; affected: number };
+
+const ROLLBACK = Symbol("rollback-preview");
+
+export async function runRead(schema: string, statement: string): Promise<SqlResult> {
+  return withTransaction(schema, async (tx) => {
+    const rows = (await tx.unsafe(statement)) as unknown as Record<string, unknown>[];
+    const columns = rows.length ? Object.keys(rows[0]) : [];
+    return { kind: "read", columns, rows: rows.slice(0, 500), rowCount: rows.length };
+  });
+}
+
+export async function previewWrite(schema: string, statement: string): Promise<SqlResult> {
+  let affected = 0;
+  try {
+    await withTransaction(schema, async (tx) => {
+      const res: any = await tx.unsafe(statement);
+      affected = typeof res?.count === "number" ? res.count : Array.isArray(res) ? res.length : 0;
+      throw ROLLBACK; // force rollback — preview only
+    });
+  } catch (e) {
+    if (e !== ROLLBACK) throw e;
+  }
+  return { kind: "write-preview", affected };
+}
+
+export async function applyWrite(schema: string, statement: string): Promise<SqlResult> {
+  const actor = await currentActor();
+  return withTransaction(schema, async (tx) => {
+    const res: any = await tx.unsafe(statement);
+    const affected = typeof res?.count === "number" ? res.count : Array.isArray(res) ? res.length : 0;
+    await writeAudit(tx, { actor, schemaName: schema, tableName: null, operation: "RAW_SQL", pk: null, oldValues: null, newValues: null, statement });
+    return { kind: "write-applied", affected };
+  });
+}
