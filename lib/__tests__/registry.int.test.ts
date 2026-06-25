@@ -34,3 +34,11 @@ test("listBusinessUnits resolves tenant schema from jsonb", async () => {
   expect(fifo.tenantSchema).toBe("BL_FIFO");
   expect(none.tenantSchema).toBeNull();
 });
+
+test("listBusinessUnits returns [] when registry table is absent (42P01)", async () => {
+  const { getSql } = await import("@/lib/db");
+  await getSql().unsafe(`DROP TABLE "CARMEN_SYSTEM".tb_business_unit`);
+  const { listBusinessUnits } = await import("@/lib/registry");
+  const result = await listBusinessUnits();
+  expect(result).toEqual([]);
+});

@@ -18,8 +18,9 @@ export async function listBusinessUnits(): Promise<BusinessUnit[]> {
       id: r.id, code: r.code, name: r.name, clusterId: r.cluster_id ?? null,
       isActive: r.is_active, tenantSchema: r.tenant_schema ?? null,
     }));
-  } catch {
-    return [];
+  } catch (err: unknown) {
+    if ((err as { code?: string })?.code === "42P01") return [];
+    throw err;
   }
 }
 
@@ -32,7 +33,7 @@ export async function resolveTenantSchema(businessUnitId: string): Promise<strin
   return rows[0]?.tenant_schema ?? null;
 }
 
-export async function listSelectableSchemas() {
+export async function listSelectableSchemas(): Promise<{ system: string; tenantSchemas: string[]; allSchemas: string[] }> {
   const system = env().systemSchemaName;
   const bus = await listBusinessUnits();
   const tenantSchemas = [...new Set(bus.map((b) => b.tenantSchema).filter((s): s is string => !!s))].sort();
