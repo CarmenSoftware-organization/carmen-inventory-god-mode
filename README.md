@@ -5,13 +5,13 @@ permanent — there is no undo.** The audit log is the only recovery record.
 
 ## Setup
 1. `cp .env.example .env.local` and fill in `GOD_MODE_PASSWORD`, `SESSION_SECRET` (>=32 chars), and the DB URLs.
-2. `npm install`
-3. `npm run migrate`  # creates CARMEN_SYSTEM.tb_god_mode_audit
-4. `npm run dev`
+2. `bun install`
+3. `bun run migrate`  # creates CARMEN_SYSTEM.tb_god_mode_audit
+4. `bun run dev`
 
 ## Tests
-- `npm test` — unit + integration (integration uses embedded-postgres; no Docker needed).
-- `npx playwright test` — light E2E.
+- `bun run test` — unit + integration (integration uses embedded-postgres; no Docker needed). (Use `bun run test`, NOT `bun test` — the latter invokes Bun's built-in runner and cannot run our Vitest suite.)
+- `bunx playwright test` — light E2E.
 
 ## Safety
 - Shared-secret login; cookie session.
