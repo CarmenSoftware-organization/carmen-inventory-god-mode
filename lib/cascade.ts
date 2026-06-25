@@ -19,6 +19,10 @@ function childrenFks(fks: ForeignKey[], schema: string, table: string): ForeignK
 }
 
 export async function computeBlastRadius(schema: string, table: string, pk: Record<string, unknown>): Promise<BlastRadius> {
+  return computeBlastRadiusMany(schema, table, [pk]);
+}
+
+export async function computeBlastRadiusMany(schema: string, table: string, pks: Record<string, unknown>[]): Promise<BlastRadius> {
   const maxRows = env().cascadeMaxRows, maxDepth = env().cascadeMaxDepth;
   const fkCache = new Map<string, ForeignKey[]>();
   async function fksFor(s: string): Promise<ForeignKey[]> {
@@ -35,9 +39,15 @@ export async function computeBlastRadius(schema: string, table: string, pk: Reco
   const seen = new Set<string>();
   const rows: CascadeRow[] = [];
   let truncated = false;
-  const queue: CascadeRow[] = [{ schema, table, pk, depth: 0 }];
-  seen.add(rowKey(schema, table, pk));
-  rows.push(queue[0]);
+  const queue: CascadeRow[] = [];
+  for (const pk of pks) {
+    const key = rowKey(schema, table, pk);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const seed: CascadeRow = { schema, table, pk, depth: 0 };
+    rows.push(seed);
+    queue.push(seed);
+  }
 
   while (queue.length) {
     const node = queue.shift()!;
