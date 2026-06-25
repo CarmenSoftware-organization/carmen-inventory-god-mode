@@ -15,6 +15,7 @@ beforeAll(async () => {
     CREATE SCHEMA app;
     CREATE TABLE app.parent (id int primary key, name text not null);
     CREATE TABLE app.child (id int primary key, parent_id int references app.parent(id), note text);
+    CREATE TABLE app.composite (a int, b int, note text, PRIMARY KEY (b, a));
   `);
 });
 afterAll(async () => { await container.stop(); });
@@ -22,7 +23,7 @@ afterAll(async () => { await container.stop(); });
 test("listTables returns tables in schema", async () => {
   const { listTables } = await import("@/lib/introspect");
   const names = (await listTables("app")).map((t) => t.name).sort();
-  expect(names).toEqual(["child", "parent"]);
+  expect(names).toEqual(["child", "composite", "parent"]);
 });
 
 test("describeTable returns columns + pk", async () => {
@@ -41,4 +42,12 @@ test("listForeignKeys finds the child->parent fk", async () => {
   expect(fks[0].parentTable).toBe("parent");
   expect(fks[0].childColumns).toEqual(["parent_id"]);
   expect(fks[0].onDelete).toBe("NO ACTION");
+});
+
+test("describeTable returns composite PK in index-definition order (b, a), not attnum order", async () => {
+  const { describeTable } = await import("@/lib/introspect");
+  const shape = await describeTable("app", "composite");
+  // Table columns are declared (a, b, note) but PK is PRIMARY KEY (b, a)
+  // primaryKey must reflect the index definition order, not column attnum order
+  expect(shape.primaryKey).toEqual(["b", "a"]);
 });

@@ -55,7 +55,7 @@ export async function describeTable(schema: string, table: string): Promise<Tabl
     `SELECT a.attname FROM pg_index i
      JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
      WHERE i.indrelid = $1::regclass AND i.indisprimary
-     ORDER BY array_position(i.indkey, a.attnum)`,
+     ORDER BY array_position(i.indkey::smallint[], a.attnum)`,
     [reg],
   );
   return { columns, primaryKey: pkRows.map((r: any) => r.attname as string) };
@@ -77,7 +77,8 @@ export async function listForeignKeys(schema: string): Promise<ForeignKey[]> {
      JOIN pg_attribute ac ON ac.attrelid = con.conrelid AND ac.attnum = k.child_attnum
      JOIN pg_attribute ap ON ap.attrelid = con.confrelid AND ap.attnum = k.parent_attnum
      WHERE con.contype = 'f' AND ($1 IN (nc.nspname, np.nspname))
-     GROUP BY nc.nspname, child.relname, np.nspname, parent.relname, con.oid, con.confdeltype`,
+     GROUP BY nc.nspname, child.relname, np.nspname, parent.relname, con.oid, con.confdeltype
+     ORDER BY nc.nspname, child.relname, con.oid`,
     [schema],
   );
   return rows.map((r: any) => ({
