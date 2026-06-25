@@ -6,7 +6,7 @@
 
 **Architecture:** Next.js App Router. Server Components read; Server Actions perform every mutation (no client-side DB access). Data access is raw SQL via `postgres` (postgres.js) with `prepare:false` for PgBouncer; all dynamic schema/table/column identifiers pass through a validated `ident()` guard, all values bind as parameters. The catalog is introspected at runtime — the app knows no table shapes ahead of time. Destructive operations compute a blast radius, preview it, require type-to-confirm, then execute children-first inside one transaction while writing before/after audit rows atomically.
 
-**Tech Stack:** Next.js 15 (App Router) · React 19 · TypeScript 5 · postgres ^3.4 · zod ^3 · iron-session ^8 · @tanstack/react-table ^8 · Tailwind ^3 + shadcn/ui · @uiw/react-codemirror + @codemirror/lang-sql · Vitest ^2 + @testcontainers/postgresql ^10 · Playwright (light E2E).
+**Tech Stack:** Next.js 15 (App Router) · React 19 · TypeScript 5 · postgres ^3.4 · zod ^3 · iron-session ^8 · @tanstack/react-table ^8 · Tailwind ^3 + shadcn/ui · @uiw/react-codemirror + @codemirror/lang-sql · Vitest ^2 + embedded-postgres (real PostgreSQL binary, no Docker) · Playwright (light E2E).
 
 ## Global Constraints
 
@@ -16,7 +16,7 @@
 - **System schema name comes from `env.SYSTEM_SCHEMA_NAME`** (default `CARMEN_SYSTEM`), never hardcoded inline.
 - **Registry:** tenant schema for a business unit lives in `CARMEN_SYSTEM.tb_business_unit.db_connection->>'schema'` (jsonb, nullable).
 - **All mutations are transactional** and write an audit row in the same transaction. A mutation that cannot be audited must not commit.
-- **No destructive tests against `dev.blueledgers.com`.** Integration tests run against a disposable Testcontainers Postgres.
+- **No destructive tests against `dev.blueledgers.com`.** Integration tests run against a disposable `embedded-postgres` instance (a real PostgreSQL binary started in-process — no Docker daemon required). The shared helper `startPg()` in `test/pg.ts` returns `{ container: { stop }, url }` and integration tests import the `Pg` type from `@/test/pg`.
 - **Node 20+.** Package manager: npm.
 - Confirm-phrase: plain row delete requires typing `DELETE`; a business-unit delete with the schema-drop option requires typing the exact schema name.
 
@@ -45,7 +45,7 @@ npx create-next-app@latest . --typescript --tailwind --app --eslint --src-dir=fa
 
 ```bash
 npm i postgres@^3.4 zod@^3 iron-session@^8 @tanstack/react-table@^8 @uiw/react-codemirror @codemirror/lang-sql
-npm i -D vitest@^2 @testcontainers/postgresql@^10 @vitejs/plugin-react
+npm i -D vitest@^2 embedded-postgres @vitejs/plugin-react
 ```
 
 - [ ] **Step 3: Write `vitest.config.ts`**
@@ -325,19 +325,35 @@ git commit -m "feat: identifier guard and statement classifier"
   - Re-exports `ident`, `qualified` for convenience.
 - `Sql` / `TransactionSql` are the postgres.js types (`import postgres from "postgres"`).
 
-- [ ] **Step 1: Write the Testcontainers helper** — `test/pg.ts`
+- [ ] **Step 1: Write the embedded-postgres helper** — `test/pg.ts`
+
+Uses `embedded-postgres` (a real PostgreSQL binary, no Docker). Each call starts an isolated instance on a random port with a throwaway data dir; `persistent:false` cleans it up on stop. A small retry loop avoids port collisions when Vitest runs integration files in parallel. The returned shape (`{ container: { stop }, url }`) and exported `Pg` type are what every integration test imports.
 
 ```ts
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import postgres from "postgres";
+import EmbeddedPostgres from "embedded-postgres";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-export async function startPg(): Promise<{ container: StartedPostgreSqlContainer; url: string }> {
-  const container = await new PostgreSqlContainer("postgres:16-alpine").start();
-  return { container, url: container.getConnectionUri() };
-}
+export type Pg = { stop: () => Promise<void> };
 
-export function client(url: string) {
-  return postgres(url, { prepare: false, onnotice: () => {} });
+export async function startPg(): Promise<{ container: Pg; url: string }> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const port = 5500 + Math.floor(Math.random() * 2500);
+    const databaseDir = mkdtempSync(join(tmpdir(), "godmode-pg-"));
+    const pg = new EmbeddedPostgres({ databaseDir, user: "postgres", password: "postgres", port, persistent: false });
+    try {
+      await pg.initialise();
+      await pg.start();
+      const url = `postgresql://postgres:postgres@localhost:${port}/postgres`;
+      return { container: { stop: () => pg.stop() }, url };
+    } catch (e) {
+      lastErr = e;
+      try { await pg.stop(); } catch { /* ignore */ }
+    }
+  }
+  throw lastErr;
 }
 ```
 
@@ -345,10 +361,10 @@ export function client(url: string) {
 
 ```ts
 import { afterAll, beforeAll, expect, test } from "vitest";
-import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import type { Pg } from "@/test/pg";
 import { startPg } from "@/test/pg";
 
-let container: StartedPostgreSqlContainer;
+let container: Pg;
 
 beforeAll(async () => {
   const pg = await startPg();
@@ -585,10 +601,10 @@ git commit -m "feat: shared-secret auth with iron-session and route guard"
 
 ```ts
 import { afterAll, beforeAll, expect, test } from "vitest";
-import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import type { Pg } from "@/test/pg";
 import { startPg } from "@/test/pg";
 
-let container: StartedPostgreSqlContainer;
+let container: Pg;
 beforeAll(async () => {
   const pg = await startPg();
   container = pg.container;
@@ -754,10 +770,10 @@ git commit -m "feat: runtime catalog introspection (schemas, tables, columns, fk
 
 ```ts
 import { afterAll, beforeAll, expect, test } from "vitest";
-import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import type { Pg } from "@/test/pg";
 import { startPg } from "@/test/pg";
 
-let container: StartedPostgreSqlContainer;
+let container: Pg;
 beforeAll(async () => {
   const pg = await startPg();
   container = pg.container;
@@ -1087,10 +1103,10 @@ git commit -m "feat: table list page"
 
 ```ts
 import { afterAll, beforeAll, expect, test } from "vitest";
-import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import type { Pg } from "@/test/pg";
 import { startPg } from "@/test/pg";
 
-let container: StartedPostgreSqlContainer;
+let container: Pg;
 beforeAll(async () => {
   const pg = await startPg();
   container = pg.container;
@@ -1283,10 +1299,10 @@ git commit -m "feat: generic row grid with keyset pagination"
 
 ```ts
 import { afterAll, beforeAll, expect, test } from "vitest";
-import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import type { Pg } from "@/test/pg";
 import { startPg } from "@/test/pg";
 
-let container: StartedPostgreSqlContainer;
+let container: Pg;
 beforeAll(async () => {
   const pg = await startPg();
   container = pg.container;
@@ -1411,10 +1427,10 @@ git commit -m "feat: audit log storage + migration script"
 
 ```ts
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
-import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import type { Pg } from "@/test/pg";
 import { startPg } from "@/test/pg";
 
-let container: StartedPostgreSqlContainer;
+let container: Pg;
 beforeAll(async () => {
   const pg = await startPg();
   container = pg.container;
@@ -1871,10 +1887,10 @@ git commit -m "feat: topological table ordering for deletion"
 
 ```ts
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
-import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import type { Pg } from "@/test/pg";
 import { startPg } from "@/test/pg";
 
-let container: StartedPostgreSqlContainer;
+let container: Pg;
 beforeAll(async () => {
   const pg = await startPg();
   container = pg.container;
@@ -2248,10 +2264,10 @@ git commit -m "feat: cascade delete preview + type-to-confirm"
 
 ```ts
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
-import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import type { Pg } from "@/test/pg";
 import { startPg } from "@/test/pg";
 
-let container: StartedPostgreSqlContainer;
+let container: Pg;
 beforeAll(async () => {
   const pg = await startPg();
   container = pg.container;
