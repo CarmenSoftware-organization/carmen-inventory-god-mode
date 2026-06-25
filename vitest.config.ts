@@ -7,6 +7,7 @@ export default defineConfig({
     include: ["**/*.test.ts", "**/*.test.tsx"],
     environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     testTimeout: 60_000,
+    fileParallelism: false,
   },
   resolve: { alias: { "@": path.resolve(__dirname, ".") } },
 });
