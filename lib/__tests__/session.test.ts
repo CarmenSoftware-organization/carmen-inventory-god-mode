@@ -12,3 +12,13 @@ test("verifyPassword is correct and length-safe", async () => {
   expect(verifyPassword("wrong")).toBe(false);
   expect(verifyPassword("")).toBe(false);
 });
+
+test("assertAuthed throws when authed is false", async () => {
+  const { assertAuthed } = await import("@/lib/session");
+  expect(() => assertAuthed({ authed: false })).toThrow(/unauthorized/i);
+});
+
+test("assertAuthed does not throw when authed is true", async () => {
+  const { assertAuthed } = await import("@/lib/session");
+  expect(() => assertAuthed({ authed: true })).not.toThrow();
+});

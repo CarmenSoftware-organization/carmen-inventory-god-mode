@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { describeTable } from "@/lib/introspect";
 import { coerceValue } from "@/lib/coerce";
 import { applyInsert, applyUpdate } from "@/lib/write";
+import { requireAuth } from "@/lib/session";
 
 async function valuesFromForm(schema: string, table: string, formData: FormData, includeAllColumns: boolean) {
   const shape = await describeTable(schema, table);
@@ -20,6 +21,7 @@ async function valuesFromForm(schema: string, table: string, formData: FormData,
 }
 
 export async function submitInsert(schema: string, table: string, formData: FormData): Promise<void> {
+  await requireAuth();
   const values = await valuesFromForm(schema, table, formData, false);
   await applyInsert(schema, table, values);
   revalidatePath(`/${schema}/${table}`);
@@ -27,6 +29,7 @@ export async function submitInsert(schema: string, table: string, formData: Form
 }
 
 export async function submitUpdate(schema: string, table: string, pkJson: string, formData: FormData): Promise<void> {
+  await requireAuth();
   const pk = JSON.parse(pkJson) as Record<string, unknown>;
   const values = await valuesFromForm(schema, table, formData, true);
   for (const k of Object.keys(pk)) delete values[k]; // never update pk columns

@@ -5,8 +5,10 @@ import { env } from "@/lib/env";
 import { executeCascade } from "@/lib/cascade";
 import { requiredPhrase, phraseMatches } from "@/lib/delete-confirm";
 import { resolveTenantSchema } from "@/lib/registry";
+import { requireAuth } from "@/lib/session";
 
 export async function confirmDelete(schema: string, table: string, pkJson: string, formData: FormData): Promise<void> {
+  await requireAuth();
   const pk = JSON.parse(pkJson) as Record<string, unknown>;
   const isBusinessUnit = schema === env().systemSchemaName && table === "tb_business_unit";
   let dropSchema: string | null = null;

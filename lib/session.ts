@@ -21,3 +21,13 @@ export function verifyPassword(input: string): boolean {
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
+
+export function assertAuthed(session: SessionData): void {
+  if (!session.authed) throw new Error("Unauthorized");
+}
+
+export async function requireAuth(): Promise<SessionData> {
+  const session = await getSession();
+  assertAuthed(session);
+  return session;
+}
