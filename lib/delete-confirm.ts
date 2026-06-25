@@ -4,3 +4,10 @@ export function requiredPhrase(opts: { isBusinessUnit: boolean; dropSchema: stri
 export function phraseMatches(input: string, required: string): boolean {
   return input === required;
 }
+
+export function radiusTouchesBusinessUnits(
+  byTable: Array<{ schema: string; table: string }>,
+  systemSchema: string,
+): boolean {
+  return byTable.some((b) => b.schema === systemSchema && b.table === "tb_business_unit");
+}
