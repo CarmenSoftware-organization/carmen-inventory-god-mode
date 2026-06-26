@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BusinessUnitsTable } from "@/components/business-units-table";
 import { listBusinessUnits, listSelectableSchemas } from "@/lib/registry";
 
 export const dynamic = "force-dynamic";
@@ -16,28 +17,7 @@ export default async function SchemasPage() {
 
       <section>
         <h2 className="mb-2 text-lg font-semibold">Business Units</h2>
-        <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th>Code</th><th>Name</th><th>Active</th><th>Tenant schema</th><th></th></tr></thead>
-          <tbody>
-            {bus.map((b) => (
-              <tr key={b.id} className="border-b">
-                <td className="py-1 font-mono">{b.code}</td>
-                <td>{b.name}</td>
-                <td>{b.isActive ? "yes" : "no"}</td>
-                <td>{b.tenantSchema ?? <span className="rounded bg-gray-200 px-2 text-xs">no schema</span>}</td>
-                <td className="space-x-3 text-right">
-                  {b.tenantSchema && <Link href={`/${encodeURIComponent(b.tenantSchema)}/tables`} className="text-blue-600">open →</Link>}
-                  <Link
-                    href={`/${encodeURIComponent(sel.system)}/tb_business_unit/delete?pk=${encodeURIComponent(JSON.stringify({ id: b.id }))}`}
-                    className="text-red-600"
-                  >
-                    delete
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <BusinessUnitsTable bus={bus} system={sel.system} />
       </section>
 
       <section>
