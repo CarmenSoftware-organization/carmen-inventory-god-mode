@@ -5,6 +5,7 @@ import { ident, qualified } from "@/lib/sql-guard";
 import { env } from "@/lib/env";
 import { writeAudit } from "@/lib/audit";
 import { currentActor, whereFromPk } from "@/lib/write";
+import type { OnProgress } from "@/lib/progress";
 
 export type CascadeRow = { schema: string; table: string; pk: Record<string, unknown>; depth: number };
 export type BlastRadius = { rows: CascadeRow[]; byTable: Array<{ schema: string; table: string; count: number }>; maxDepth: number; truncated: boolean };
@@ -19,6 +20,10 @@ function childrenFks(fks: ForeignKey[], schema: string, table: string): ForeignK
 }
 
 export async function computeBlastRadius(schema: string, table: string, pk: Record<string, unknown>): Promise<BlastRadius> {
+  return computeBlastRadiusMany(schema, table, [pk]);
+}
+
+export async function computeBlastRadiusMany(schema: string, table: string, pks: Record<string, unknown>[]): Promise<BlastRadius> {
   const maxRows = env().cascadeMaxRows, maxDepth = env().cascadeMaxDepth;
   const fkCache = new Map<string, ForeignKey[]>();
   async function fksFor(s: string): Promise<ForeignKey[]> {
@@ -35,9 +40,15 @@ export async function computeBlastRadius(schema: string, table: string, pk: Reco
   const seen = new Set<string>();
   const rows: CascadeRow[] = [];
   let truncated = false;
-  const queue: CascadeRow[] = [{ schema, table, pk, depth: 0 }];
-  seen.add(rowKey(schema, table, pk));
-  rows.push(queue[0]);
+  const queue: CascadeRow[] = [];
+  for (const pk of pks) {
+    const key = rowKey(schema, table, pk);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const seed: CascadeRow = { schema, table, pk, depth: 0 };
+    rows.push(seed);
+    queue.push(seed);
+  }
 
   while (queue.length) {
     const node = queue.shift()!;
@@ -93,11 +104,9 @@ export async function computeBlastRadius(schema: string, table: string, pk: Reco
   return { rows, byTable, maxDepth: maxDepthSeen, truncated };
 }
 
-export async function executeCascade(
-  schema: string, table: string, pk: Record<string, unknown>, opts: { dropTenantSchema?: string | null },
-): Promise<{ deleted: number; droppedSchema: string | null }> {
-  const actor = await currentActor();
-  const radius = await computeBlastRadius(schema, table, pk);
+async function deleteRadius(
+  actor: string, radius: BlastRadius, opts: { dropTenantSchemas?: string[]; onProgress?: OnProgress },
+): Promise<{ deleted: number; droppedSchemas: string[] }> {
   if (radius.truncated) throw new Error("Blast radius exceeds configured caps; refusing to cascade. Raise CASCADE_MAX_ROWS/DEPTH or narrow the target.");
 
   const involvedTables: TableRef[] = [...new Set(radius.rows.map((r) => `${r.schema}.${r.table}`))]
@@ -106,7 +115,7 @@ export async function executeCascade(
   for (const s of new Set(involvedTables.map((t) => t.schema))) allFks.push(...await listForeignKeys(s));
   const { order, cycles } = orderTablesForDeletion(involvedTables, allFks);
 
-  // C2 fix: if a genuine multi-table FK cycle exists, refuse to proceed (fail-safe).
+  // If a genuine multi-table FK cycle exists, refuse to proceed (fail-safe).
   if (cycles.length > 0) {
     throw new Error(
       "Cannot cascade: foreign-key cycle among tables " +
@@ -122,10 +131,17 @@ export async function executeCascade(
     rowsByTable.get(k)!.push(r);
   }
 
+  const onProgress = opts.onProgress;
+  const dropSchemas = opts.dropTenantSchemas ?? [];
+  onProgress?.({ type: "total", total: radius.rows.length + dropSchemas.length });
+
   return withTransaction(null, async (tx) => {
     let deleted = 0;
     for (const t of order) {
       const list = rowsByTable.get(`${t.schema}.${t.table}`) ?? [];
+      if (list.length > 0) {
+        onProgress?.({ type: "step", label: `Deleting ${t.schema}.${t.table} (${list.length} rows)…`, done: deleted });
+      }
       for (const r of list) {
         const keys = Object.keys(r.pk);
         const clause = keys.map((k, i) => `${ident(k)} = $${i + 1}`).join(" AND ");
@@ -137,13 +153,35 @@ export async function executeCascade(
         deleted += 1;
       }
     }
-    let droppedSchema: string | null = null;
-    if (opts.dropTenantSchema) {
-      await tx.unsafe(`DROP SCHEMA ${ident(opts.dropTenantSchema)} CASCADE`);
-      droppedSchema = opts.dropTenantSchema;
-      await writeAudit(tx, { actor, schemaName: opts.dropTenantSchema, tableName: null, operation: "DROP_SCHEMA",
-        pk: null, oldValues: null, newValues: null, statement: `DROP SCHEMA ${ident(opts.dropTenantSchema)} CASCADE` });
+    const droppedSchemas: string[] = [];
+    for (const s of dropSchemas) {
+      onProgress?.({ type: "step", label: `Dropping schema ${s}…`, done: deleted + droppedSchemas.length });
+      await tx.unsafe(`DROP SCHEMA ${ident(s)} CASCADE`);
+      droppedSchemas.push(s);
+      await writeAudit(tx, { actor, schemaName: s, tableName: null, operation: "DROP_SCHEMA",
+        pk: null, oldValues: null, newValues: null, statement: `DROP SCHEMA ${ident(s)} CASCADE` });
     }
-    return { deleted, droppedSchema };
+    return { deleted, droppedSchemas };
   });
+}
+
+export async function executeCascade(
+  schema: string, table: string, pk: Record<string, unknown>,
+  opts: { dropTenantSchemas?: string[]; onProgress?: OnProgress },
+): Promise<{ deleted: number; droppedSchemas: string[] }> {
+  const actor = await currentActor();
+  opts.onProgress?.({ type: "step", label: "Computing blast radius…" });
+  const radius = await computeBlastRadius(schema, table, pk);
+  return deleteRadius(actor, radius, opts);
+}
+
+export async function executeCascadeMany(
+  schema: string, table: string, pks: Record<string, unknown>[],
+  opts: { onProgress?: OnProgress } = {},
+): Promise<{ deleted: number }> {
+  const actor = await currentActor();
+  opts.onProgress?.({ type: "step", label: "Computing blast radius…" });
+  const radius = await computeBlastRadiusMany(schema, table, pks);
+  const { deleted } = await deleteRadius(actor, radius, { dropTenantSchemas: [], onProgress: opts.onProgress });
+  return { deleted };
 }

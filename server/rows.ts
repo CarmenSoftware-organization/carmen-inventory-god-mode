@@ -6,7 +6,7 @@ import { coerceValue } from "@/lib/coerce";
 import { applyInsert, applyUpdate } from "@/lib/write";
 import { requireAuth } from "@/lib/session";
 
-async function valuesFromForm(schema: string, table: string, formData: FormData, includeAllColumns: boolean) {
+export async function valuesFromForm(schema: string, table: string, formData: FormData, includeAllColumns: boolean) {
   const shape = await describeTable(schema, table);
   const values: Record<string, unknown> = {};
   for (const col of shape.columns) {
