@@ -43,3 +43,6 @@ next-env.d.ts
 # playwright
 /test-results/
 /playwright-report/
+
+# superpowers SDD scratch (ledger, briefs, reports, review diffs)
+/.superpowers/
