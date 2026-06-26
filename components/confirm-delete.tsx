@@ -1,10 +1,11 @@
 import type { BlastRadius } from "@/lib/cascade";
 
 export function ConfirmDelete({
-  schema, table, pkJson, radius, action, isBusinessUnit, tenantSchema, requiredPhrase,
+  schema, table, pkJson, radius, action, isBusinessUnit, tenantSchema, orphanSchemas, requiredPhrase,
 }: {
   schema: string; table: string; pkJson: string; radius: BlastRadius;
-  action: (fd: FormData) => void; isBusinessUnit: boolean; tenantSchema: string | null; requiredPhrase: string;
+  action: (fd: FormData) => void; isBusinessUnit: boolean; tenantSchema: string | null;
+  orphanSchemas?: string[]; requiredPhrase: string;
 }) {
   return (
     <form action={action} className="max-w-2xl space-y-4">
@@ -23,6 +24,13 @@ export function ConfirmDelete({
         <label className="flex items-center gap-2 rounded border border-amber-400 bg-amber-50 p-2 text-sm">
           <input type="checkbox" name="drop_schema" />
           Also <strong>DROP SCHEMA &quot;{tenantSchema}&quot; CASCADE</strong> (wipes the entire tenant database for this BU)
+        </label>
+      )}
+
+      {orphanSchemas && orphanSchemas.length > 0 && (
+        <label className="flex items-start gap-2 rounded border border-amber-400 bg-amber-50 p-2 text-sm">
+          <input type="checkbox" name="drop_schema" />
+          <span>Also <strong>DROP {orphanSchemas.length} tenant schema(s) CASCADE</strong>: <code>{orphanSchemas.join(", ")}</code> (wipes each tenant database)</span>
         </label>
       )}
 
