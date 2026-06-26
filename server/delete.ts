@@ -37,6 +37,11 @@ export async function confirmBatchDelete(schema: string, table: string, pksJson:
     throw new Error(`Confirmation text must equal "${phrase}"`);
   }
   await executeCascadeMany(schema, table, pks);
+  const isBusinessUnit = schema === env().systemSchemaName && table === "tb_business_unit";
+  if (isBusinessUnit) {
+    revalidatePath("/schemas");
+    redirect("/schemas");
+  }
   revalidatePath(`/${schema}/${table}`);
   redirect(`/${encodeURIComponent(schema)}/${encodeURIComponent(table)}`);
 }
