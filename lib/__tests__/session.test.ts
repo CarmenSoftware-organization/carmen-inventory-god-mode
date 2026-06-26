@@ -22,3 +22,8 @@ test("assertAuthed does not throw when authed is true", async () => {
   const { assertAuthed } = await import("@/lib/session");
   expect(() => assertAuthed({ authed: true })).not.toThrow();
 });
+
+test("assertAuthed accepts a session carrying a method", async () => {
+  const { assertAuthed } = await import("@/lib/session");
+  expect(() => assertAuthed({ authed: true, actor: "alice", method: "gateway" })).not.toThrow();
+});

@@ -3,7 +3,7 @@ import { getIronSession, type IronSession, type SessionOptions } from "iron-sess
 import { timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env";
 
-export type SessionData = { authed: boolean; actor?: string };
+export type SessionData = { authed: boolean; actor?: string; method?: "secret" | "gateway" };
 
 export const sessionOptions: SessionOptions = {
   password: env().sessionSecret,

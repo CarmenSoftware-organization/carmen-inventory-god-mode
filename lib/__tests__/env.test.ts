@@ -22,3 +22,26 @@ test("throws when a required var is missing", () => {
 test("rejects a short session secret", () => {
   expect(() => loadEnv({ ...base, SESSION_SECRET: "short" })).toThrow();
 });
+
+test("gateway disabled when no base url, app id defaults", () => {
+  const env = loadEnv(base);
+  expect(env.gatewayEnabled).toBe(false);
+  expect(env.backendApiBaseUrl).toBeUndefined();
+  expect(env.backendApiAppId).toBe("42ab2083-5dbd-47fc-bb32-3de97dc0cd89");
+  expect(env.backendApiInsecureTls).toBe(false);
+});
+
+test("gateway enabled when base url present", () => {
+  const env = loadEnv({ ...base, BACKEND_API_BASE_URL: "https://dev.blueledgers.com:4001" });
+  expect(env.gatewayEnabled).toBe(true);
+  expect(env.backendApiBaseUrl).toBe("https://dev.blueledgers.com:4001");
+});
+
+test("insecure tls only true for the literal string 'true'", () => {
+  expect(loadEnv({ ...base, BACKEND_API_INSECURE_TLS: "true" }).backendApiInsecureTls).toBe(true);
+  expect(loadEnv({ ...base, BACKEND_API_INSECURE_TLS: "false" }).backendApiInsecureTls).toBe(false);
+});
+
+test("rejects a non-url base url", () => {
+  expect(() => loadEnv({ ...base, BACKEND_API_BASE_URL: "not-a-url" })).toThrow();
+});

@@ -9,6 +9,9 @@ const schema = z.object({
   SESSION_SECRET: z.string().min(32, "SESSION_SECRET must be >= 32 chars"),
   CASCADE_MAX_ROWS: z.coerce.number().int().positive().default(5000),
   CASCADE_MAX_DEPTH: z.coerce.number().int().positive().default(20),
+  BACKEND_API_BASE_URL: z.string().url().optional(),
+  BACKEND_API_APP_ID: z.string().min(1).default("42ab2083-5dbd-47fc-bb32-3de97dc0cd89"),
+  BACKEND_API_INSECURE_TLS: z.string().optional(),
 });
 
 export type Env = {
@@ -20,6 +23,10 @@ export type Env = {
   sessionSecret: string;
   cascadeMaxRows: number;
   cascadeMaxDepth: number;
+  backendApiBaseUrl?: string;
+  backendApiAppId: string;
+  backendApiInsecureTls: boolean;
+  gatewayEnabled: boolean;
 };
 
 export function loadEnv(raw: Record<string, string | undefined>): Env {
@@ -33,6 +40,10 @@ export function loadEnv(raw: Record<string, string | undefined>): Env {
     sessionSecret: p.SESSION_SECRET,
     cascadeMaxRows: p.CASCADE_MAX_ROWS,
     cascadeMaxDepth: p.CASCADE_MAX_DEPTH,
+    backendApiBaseUrl: p.BACKEND_API_BASE_URL,
+    backendApiAppId: p.BACKEND_API_APP_ID,
+    backendApiInsecureTls: p.BACKEND_API_INSECURE_TLS === "true",
+    gatewayEnabled: !!p.BACKEND_API_BASE_URL,
   };
 }
 
