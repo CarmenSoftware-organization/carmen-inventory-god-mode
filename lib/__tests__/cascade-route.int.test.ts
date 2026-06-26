@@ -2,6 +2,10 @@ import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import type { Pg } from "@/test/pg";
 import { startPg } from "@/test/pg";
 
+const { requireAuthMock } = vi.hoisted(() => ({
+  requireAuthMock: vi.fn(async () => ({ authed: true, actor: "tester" })),
+}));
+
 let container: Pg;
 beforeAll(async () => {
   const pg = await startPg();
@@ -13,7 +17,7 @@ beforeAll(async () => {
   process.env.SESSION_SECRET = "x".repeat(32);
   process.env.CASCADE_MAX_ROWS = "5000";
   process.env.CASCADE_MAX_DEPTH = "20";
-  vi.mock("@/lib/session", () => ({ requireAuth: async () => ({ authed: true, actor: "tester" }) }));
+  vi.mock("@/lib/session", () => ({ requireAuth: requireAuthMock }));
   vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
   const { getSql } = await import("@/lib/db");
   await getSql().unsafe(`
@@ -37,6 +41,18 @@ async function collect(res: Response): Promise<any[]> {
   for (;;) { const { value, done } = await reader.read(); if (done) break; buf += dec.decode(value, { stream: true }); }
   return buf.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => JSON.parse(l));
 }
+
+test("returns 401 JSON and deletes nothing when unauthorized", async () => {
+  const { POST } = await import("@/app/api/ops/cascade-delete/route");
+  requireAuthMock.mockRejectedValueOnce(new Error("Unauthorized"));
+  const res = await POST(req({ schema: "app", table: "p", pks: [{ id: 1 }], confirm: "DELETE" }));
+  expect(res.status).toBe(401);
+  expect(res.headers.get("content-type")).toContain("application/json");
+  expect(await res.json()).toEqual({ error: "Unauthorized" });
+  const { getSql } = await import("@/lib/db");
+  const n = await getSql().unsafe(`SELECT count(*)::int n FROM app.p`);
+  expect(n[0].n).toBe(2);
+});
 
 test("rejects a wrong confirm phrase with 400 and does not delete", async () => {
   const { POST } = await import("@/app/api/ops/cascade-delete/route");
