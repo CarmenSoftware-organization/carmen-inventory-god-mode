@@ -40,3 +40,34 @@ export async function listSelectableSchemas(): Promise<{ system: string; tenantS
   const allSchemas = await listSchemaNames();
   return { system, tenantSchemas, allSchemas };
 }
+
+export type Cluster = { id: string; code: string; name: string; deletedAt: string | null; businessUnitCount: number };
+
+export async function listClusters(): Promise<Cluster[]> {
+  const cl = qualified(env().systemSchemaName, "tb_cluster");
+  const bu = qualified(env().systemSchemaName, "tb_business_unit");
+  try {
+    const rows = await getSql().unsafe(
+      `SELECT c.id::text, c.code, c.name, c.deleted_at::text AS deleted_at,
+              (SELECT count(*) FROM ${bu} b WHERE b.cluster_id = c.id)::int AS business_unit_count
+       FROM ${cl} c ORDER BY c.code`,
+    );
+    return rows.map((r: any) => ({
+      id: r.id, code: r.code, name: r.name,
+      deletedAt: r.deleted_at ?? null, businessUnitCount: r.business_unit_count,
+    }));
+  } catch (err: unknown) {
+    if ((err as { code?: string })?.code === "42P01") return [];
+    throw err;
+  }
+}
+
+export async function resolveTenantSchemasForCluster(clusterId: string): Promise<string[]> {
+  const bu = qualified(env().systemSchemaName, "tb_business_unit");
+  const rows = await getSql().unsafe(
+    `SELECT DISTINCT db_connection->>'schema' AS tenant_schema
+     FROM ${bu} WHERE cluster_id = $1::uuid AND db_connection->>'schema' IS NOT NULL`,
+    [clusterId],
+  );
+  return rows.map((r: any) => r.tenant_schema as string);
+}

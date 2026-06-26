@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 import { env } from "@/lib/env";
 import { qualified } from "@/lib/sql-guard";
 
-export type Operation = "INSERT" | "UPDATE" | "DELETE" | "CASCADE_DELETE" | "DROP_SCHEMA" | "RAW_SQL";
+export type Operation = "INSERT" | "UPDATE" | "DELETE" | "CASCADE_DELETE" | "DROP_SCHEMA" | "RAW_SQL" | "SOFT_DELETE" | "RESTORE";
 export type AuditEntry = { actor: string; schemaName: string; tableName: string | null; operation: Operation; pk: unknown; oldValues: unknown; newValues: unknown; statement: string | null };
 
 function auditRel(): string { return qualified(env().systemSchemaName, "tb_god_mode_audit"); }

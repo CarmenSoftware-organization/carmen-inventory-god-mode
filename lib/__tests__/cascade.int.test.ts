@@ -80,3 +80,20 @@ test("executeCascade refuses to cascade when tables form an FK cycle (C2)", asyn
   const { executeCascade } = await import("@/lib/cascade");
   await expect(executeCascade("app", "aa", { id: 1 }, {})).rejects.toThrow(/cycle/i);
 });
+
+test("executeCascade drops multiple tenant schemas in one transaction", async () => {
+  const { executeCascade } = await import("@/lib/cascade");
+  const { getSql } = await import("@/lib/db");
+  await getSql().unsafe(`
+    CREATE TABLE app.drv (id int primary key);
+    INSERT INTO app.drv VALUES (1);
+    CREATE SCHEMA tdrop1;
+    CREATE SCHEMA tdrop2;
+  `);
+  const res = await executeCascade("app", "drv", { id: 1 }, { dropTenantSchemas: ["tdrop1", "tdrop2"] });
+  expect(res.droppedSchemas.sort()).toEqual(["tdrop1", "tdrop2"]);
+  const left = await getSql().unsafe(
+    `SELECT nspname FROM pg_namespace WHERE nspname IN ('tdrop1','tdrop2')`,
+  );
+  expect(left.length).toBe(0);
+});

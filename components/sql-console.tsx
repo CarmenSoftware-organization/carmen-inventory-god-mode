@@ -4,6 +4,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { sql as sqlLang } from "@codemirror/lang-sql";
 import { runSql, applySql } from "@/server/sql";
 import type { SqlResult } from "@/lib/sql-runner";
+import { OperationProgress } from "@/components/operation-progress";
 
 export function SqlConsole({ schema }: { schema: string }) {
   const [text, setText] = useState("SELECT 1");
@@ -30,6 +31,7 @@ export function SqlConsole({ schema }: { schema: string }) {
           </button>
         )}
       </div>
+      {busy && <OperationProgress state={{ phase: "running", done: 0, label: "Running…" }} />}
       {error && <pre className="whitespace-pre-wrap rounded bg-red-50 p-3 text-sm text-red-800">{error}</pre>}
       {result?.kind === "read" && (
         <div className="overflow-x-auto">
