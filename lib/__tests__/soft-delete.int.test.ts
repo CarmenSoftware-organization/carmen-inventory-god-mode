@@ -53,6 +53,36 @@ test("empty selection throws", async () => {
   await expect(softDeleteRows("public", "app_c", [])).rejects.toThrow();
 });
 
+test("softDeleteRows records deleted_by_id when configured; restore clears it", async () => {
+  const { getSql } = await import("@/lib/db");
+  await getSql().unsafe(`
+    CREATE TABLE app_by (id int primary key, deleted_at timestamptz, deleted_by_id uuid);
+    INSERT INTO app_by VALUES (1, NULL, NULL);
+  `);
+  const { softDeleteRows, restoreRows } = await import("@/lib/soft-delete");
+  const who = "11111111-1111-1111-1111-111111111111";
+
+  await softDeleteRows("public", "app_by", [{ id: 1 }], { deletedByColumn: "deleted_by_id", deletedById: who });
+  let rows = await getSql().unsafe(`SELECT deleted_at, deleted_by_id::text AS by FROM app_by WHERE id = 1`);
+  expect(rows[0].deleted_at).not.toBeNull();
+  expect(rows[0].by).toBe(who);
+
+  await restoreRows("public", "app_by", [{ id: 1 }], { deletedByColumn: "deleted_by_id" });
+  rows = await getSql().unsafe(`SELECT deleted_at, deleted_by_id::text AS by FROM app_by WHERE id = 1`);
+  expect(rows[0].deleted_at).toBeNull();
+  expect(rows[0].by).toBeNull();
+});
+
+test("softDeleteRows leaves deleted_by_id NULL when no id is configured", async () => {
+  const { getSql } = await import("@/lib/db");
+  await getSql().unsafe(`INSERT INTO app_by VALUES (2, NULL, NULL)`);
+  const { softDeleteRows } = await import("@/lib/soft-delete");
+  await softDeleteRows("public", "app_by", [{ id: 2 }], { deletedByColumn: "deleted_by_id", deletedById: null });
+  const rows = await getSql().unsafe(`SELECT deleted_at, deleted_by_id FROM app_by WHERE id = 2`);
+  expect(rows[0].deleted_at).not.toBeNull();
+  expect(rows[0].deleted_by_id).toBeNull();
+});
+
 test("transaction rolls back on mid-loop failure", async () => {
   const { getSql } = await import("@/lib/db");
   const { softDeleteRows } = await import("@/lib/soft-delete");

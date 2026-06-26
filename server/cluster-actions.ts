@@ -15,15 +15,21 @@ function parsePks(formData: FormData): Record<string, unknown>[] {
   return pks as Record<string, unknown>[];
 }
 
+// tb_cluster carries the app's deleted_by_id audit column. God mode has no real
+// user UUID, so we stamp the optional GOD_MODE_USER_ID when configured (NULL otherwise).
+function softDeleteOpts() {
+  return { deletedByColumn: "deleted_by_id", deletedById: env().godModeUserId ?? null };
+}
+
 export async function softDeleteClusters(formData: FormData): Promise<void> {
   await requireAuth();
-  await softDeleteRows(env().systemSchemaName, TABLE, parsePks(formData));
+  await softDeleteRows(env().systemSchemaName, TABLE, parsePks(formData), softDeleteOpts());
   revalidatePath("/clusters");
 }
 
 export async function restoreClusters(formData: FormData): Promise<void> {
   await requireAuth();
-  await restoreRows(env().systemSchemaName, TABLE, parsePks(formData));
+  await restoreRows(env().systemSchemaName, TABLE, parsePks(formData), softDeleteOpts());
   revalidatePath("/clusters");
 }
 
