@@ -52,3 +52,25 @@ test("empty selection throws", async () => {
   const { softDeleteRows } = await import("@/lib/soft-delete");
   await expect(softDeleteRows("public", "app_c", [])).rejects.toThrow();
 });
+
+test("transaction rolls back on mid-loop failure", async () => {
+  const { getSql } = await import("@/lib/db");
+  const { softDeleteRows } = await import("@/lib/soft-delete");
+
+  // Insert a fresh dedicated row
+  await getSql().unsafe(`INSERT INTO app_c VALUES (99, 'rollback', NULL)`);
+
+  // Verify it starts active
+  const beforeRows = await getSql().unsafe(`SELECT deleted_at FROM app_c WHERE id = 99`);
+  expect(beforeRows[0].deleted_at).toBeNull();
+
+  // Call with valid row and invalid row (non-existent column "nope")
+  // The update for id=99 happens first, then nope=1 fails
+  await expect(
+    softDeleteRows("public", "app_c", [{ id: 99 }, { nope: 1 }])
+  ).rejects.toThrow();
+
+  // Verify row 99 was rolled back (still active)
+  const afterRows = await getSql().unsafe(`SELECT deleted_at FROM app_c WHERE id = 99`);
+  expect(afterRows[0].deleted_at).toBeNull();
+});
