@@ -43,9 +43,15 @@ export function useOperationStream(): {
     }
 
     let redirectTo: string | undefined;
-    for await (const event of readNdjson(res.body.getReader())) {
-      if (event.type === "done") redirectTo = event.redirect;
-      setState((prev) => reduceOperation(prev, event));
+    try {
+      for await (const event of readNdjson(res.body.getReader())) {
+        if (event.type === "done") redirectTo = event.redirect;
+        setState((prev) => reduceOperation(prev, event));
+      }
+    } catch (e) {
+      running.current = false;
+      setState({ phase: "error", done: 0, error: e instanceof Error ? e.message : String(e) });
+      return;
     }
 
     running.current = false;
