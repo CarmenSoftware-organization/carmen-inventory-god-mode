@@ -19,7 +19,7 @@ export async function confirmDelete(schema: string, table: string, pkJson: strin
   if (!phraseMatches(String(formData.get("confirm") ?? ""), phrase)) {
     throw new Error(`Confirmation text must equal "${phrase}"`);
   }
-  await executeCascade(schema, table, pk, { dropTenantSchema: dropSchema });
+  await executeCascade(schema, table, pk, { dropTenantSchemas: dropSchema ? [dropSchema] : [] });
   if (isBusinessUnit) {
     revalidatePath("/schemas");
     redirect("/schemas");

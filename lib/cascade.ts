@@ -104,8 +104,8 @@ export async function computeBlastRadiusMany(schema: string, table: string, pks:
 }
 
 async function deleteRadius(
-  actor: string, radius: BlastRadius, opts: { dropTenantSchema?: string | null },
-): Promise<{ deleted: number; droppedSchema: string | null }> {
+  actor: string, radius: BlastRadius, opts: { dropTenantSchemas?: string[] },
+): Promise<{ deleted: number; droppedSchemas: string[] }> {
   if (radius.truncated) throw new Error("Blast radius exceeds configured caps; refusing to cascade. Raise CASCADE_MAX_ROWS/DEPTH or narrow the target.");
 
   const involvedTables: TableRef[] = [...new Set(radius.rows.map((r) => `${r.schema}.${r.table}`))]
@@ -145,20 +145,20 @@ async function deleteRadius(
         deleted += 1;
       }
     }
-    let droppedSchema: string | null = null;
-    if (opts.dropTenantSchema) {
-      await tx.unsafe(`DROP SCHEMA ${ident(opts.dropTenantSchema)} CASCADE`);
-      droppedSchema = opts.dropTenantSchema;
-      await writeAudit(tx, { actor, schemaName: opts.dropTenantSchema, tableName: null, operation: "DROP_SCHEMA",
-        pk: null, oldValues: null, newValues: null, statement: `DROP SCHEMA ${ident(opts.dropTenantSchema)} CASCADE` });
+    const droppedSchemas: string[] = [];
+    for (const s of opts.dropTenantSchemas ?? []) {
+      await tx.unsafe(`DROP SCHEMA ${ident(s)} CASCADE`);
+      droppedSchemas.push(s);
+      await writeAudit(tx, { actor, schemaName: s, tableName: null, operation: "DROP_SCHEMA",
+        pk: null, oldValues: null, newValues: null, statement: `DROP SCHEMA ${ident(s)} CASCADE` });
     }
-    return { deleted, droppedSchema };
+    return { deleted, droppedSchemas };
   });
 }
 
 export async function executeCascade(
-  schema: string, table: string, pk: Record<string, unknown>, opts: { dropTenantSchema?: string | null },
-): Promise<{ deleted: number; droppedSchema: string | null }> {
+  schema: string, table: string, pk: Record<string, unknown>, opts: { dropTenantSchemas?: string[] },
+): Promise<{ deleted: number; droppedSchemas: string[] }> {
   const actor = await currentActor();
   const radius = await computeBlastRadius(schema, table, pk);
   return deleteRadius(actor, radius, opts);
@@ -169,6 +169,6 @@ export async function executeCascadeMany(
 ): Promise<{ deleted: number }> {
   const actor = await currentActor();
   const radius = await computeBlastRadiusMany(schema, table, pks);
-  const { deleted } = await deleteRadius(actor, radius, { dropTenantSchema: null });
+  const { deleted } = await deleteRadius(actor, radius, { dropTenantSchemas: [] });
   return { deleted };
 }
