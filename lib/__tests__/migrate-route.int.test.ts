@@ -17,7 +17,7 @@ beforeAll(async () => {
 });
 afterAll(async () => { await container.stop(); });
 
-async function collect(res: Response): Promise<any[]> {
+async function collect(res: Response): Promise<Record<string, unknown>[]> {
   const reader = res.body!.getReader(); const dec = new TextDecoder(); let buf = "";
   for (;;) { const { value, done } = await reader.read(); if (done) break; buf += dec.decode(value, { stream: true }); }
   return buf.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => JSON.parse(l));
