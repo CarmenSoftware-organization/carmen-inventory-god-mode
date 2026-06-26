@@ -20,6 +20,7 @@ test("renders an orphan-schemas drop checkbox listing each schema", async () => 
   expect(box).toHaveAttribute("name", "drop_schema");
   expect(screen.getByText(/tenant_one/)).toBeInTheDocument();
   expect(screen.getByText(/tenant_two/)).toBeInTheDocument();
+  expect(screen.queryByText(/required phrase becomes the schema name/)).not.toBeInTheDocument();
 });
 
 test("no orphan checkbox when orphanSchemas is empty/absent", async () => {
@@ -27,5 +28,12 @@ test("no orphan checkbox when orphanSchemas is empty/absent", async () => {
   render(<ConfirmDelete schema="CARMEN_SYSTEM" table="tb_cluster" pkJson={JSON.stringify({ id: "1" })}
     radius={radius} action={vi.fn()} isBusinessUnit={false} tenantSchema={null}
     requiredPhrase="DELETE" />);
+  expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+
+  cleanup();
+
+  render(<ConfirmDelete schema="CARMEN_SYSTEM" table="tb_cluster" pkJson={JSON.stringify({ id: "1" })}
+    radius={radius} action={vi.fn()} isBusinessUnit={false} tenantSchema={null}
+    orphanSchemas={[]} requiredPhrase="DELETE" />);
   expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
 });

@@ -28,16 +28,21 @@ export function ConfirmDelete({
       )}
 
       {orphanSchemas && orphanSchemas.length > 0 && (
-        <label className="flex items-start gap-2 rounded border border-amber-400 bg-amber-50 p-2 text-sm">
-          <input type="checkbox" name="drop_schema" />
-          <span>Also <strong>DROP {orphanSchemas.length} tenant schema(s) CASCADE</strong>: <code>{orphanSchemas.join(", ")}</code> (wipes each tenant database)</span>
-        </label>
+        <div className="space-y-2">
+          <label className="flex items-start gap-2 rounded border border-amber-400 bg-amber-50 p-2 text-sm">
+            <input type="checkbox" name="drop_schema" />
+            <span>Also <strong>DROP {orphanSchemas.length} tenant schema(s) CASCADE</strong>: <code>{orphanSchemas.join(", ")}</code> (wipes each tenant database)</span>
+          </label>
+          <span className="block text-xs text-gray-500">The confirmation phrase below stays DELETE.</span>
+        </div>
       )}
 
       <div className="space-y-1">
         <label className="block text-sm">Type <code className="rounded bg-gray-200 px-1">{requiredPhrase}</code> to confirm:</label>
         <input name="confirm" autoComplete="off" className="w-full rounded border p-2" />
-        <p className="text-xs text-gray-500">If you check the schema-drop box, the required phrase becomes the schema name.</p>
+        {isBusinessUnit && tenantSchema && (
+          <p className="text-xs text-gray-500">If you check the schema-drop box, the required phrase becomes the schema name.</p>
+        )}
       </div>
 
       <button type="submit" className="rounded bg-red-600 px-4 py-2 font-semibold text-white" disabled={radius.truncated}>Permanently delete</button>
