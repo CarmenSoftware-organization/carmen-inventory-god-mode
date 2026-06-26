@@ -84,3 +84,12 @@ test("secret login rejects a bad secret", async () => {
   expect(out).toEqual({ error: "รหัสลับไม่ถูกต้อง" });
   expect(session.authed).toBe(false);
 });
+
+test("gatewayLogin maps invalid_credentials to the Thai message", async () => {
+  verifySuperAdmin.mockResolvedValueOnce({ ok: false, reason: "invalid_credentials" });
+  const { gatewayLogin } = await import("@/server/auth");
+  const out = await gatewayLogin({}, fd({ username: "alice", password: "wrongpw" }));
+  expect(out).toEqual({ error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+  expect(session.authed).toBe(false);
+  expect(save).not.toHaveBeenCalled();
+});

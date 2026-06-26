@@ -71,3 +71,19 @@ test("network failure -> gateway_unavailable", async () => {
   const { verifySuperAdmin } = await import("@/lib/backend-api");
   expect(await verifySuperAdmin("alice", "pw")).toEqual({ ok: false, reason: "gateway_unavailable" });
 });
+
+test("permission endpoint non-2xx -> not_super_admin", async () => {
+  fetchMock
+    .mockResolvedValueOnce(res({ data: { access_token: "tok" } }))
+    .mockResolvedValueOnce(res({ message: "forbidden" }, 403));
+  const { verifySuperAdmin } = await import("@/lib/backend-api");
+  expect(await verifySuperAdmin("alice", "pw")).toEqual({ ok: false, reason: "not_super_admin" });
+});
+
+test("non-JSON login body -> invalid_credentials", async () => {
+  fetchMock.mockResolvedValueOnce(
+    new Response("<html>oops</html>", { status: 200, headers: { "content-type": "text/html" } }),
+  );
+  const { verifySuperAdmin } = await import("@/lib/backend-api");
+  expect(await verifySuperAdmin("alice", "pw")).toEqual({ ok: false, reason: "invalid_credentials" });
+});

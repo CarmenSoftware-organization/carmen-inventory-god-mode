@@ -13,13 +13,15 @@ class GatewayError extends Error {
 }
 
 const loginSchema = z.object({ access_token: z.string().min(1) }).passthrough();
-const permissionSchema = z
-  .object({
-    is_super_admin: z.boolean().optional(),
-    platform: z.array(z.string()).optional(),
-    clusters: z.record(z.array(z.string())).optional(),
-  })
-  .passthrough();
+const permissionSchema = z.object({ is_super_admin: z.boolean().optional() }).passthrough();
+
+async function readJson(res: Response, reason: GatewayReason): Promise<unknown> {
+  try {
+    return await res.json();
+  } catch {
+    throw new GatewayError(reason);
+  }
+}
 
 function unwrap(body: unknown): unknown {
   if (body && typeof body === "object" && "data" in body) {
@@ -49,8 +51,8 @@ async function apiFetch(path: string, init: FetchInit): Promise<Response> {
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
-        "x-app-id": env().backendApiAppId,
         ...(init.headers ?? {}),
+        "x-app-id": env().backendApiAppId,
       },
       ...(dispatcher ? { dispatcher } : {}),
     });
@@ -65,7 +67,7 @@ async function gatewayLogin(username: string, password: string): Promise<string>
     body: JSON.stringify({ username, password }),
   });
   if (!res.ok) throw new GatewayError("invalid_credentials");
-  const parsed = loginSchema.safeParse(unwrap(await res.json()));
+  const parsed = loginSchema.safeParse(unwrap(await readJson(res, "invalid_credentials")));
   if (!parsed.success) throw new GatewayError("invalid_credentials");
   return parsed.data.access_token;
 }
@@ -76,7 +78,7 @@ async function fetchPlatformPermission(token: string): Promise<boolean> {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new GatewayError("not_super_admin");
-  const parsed = permissionSchema.safeParse(unwrap(await res.json()));
+  const parsed = permissionSchema.safeParse(unwrap(await readJson(res, "not_super_admin")));
   if (!parsed.success) throw new GatewayError("not_super_admin");
   return parsed.data.is_super_admin === true;
 }
