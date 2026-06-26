@@ -3,7 +3,6 @@ import { env } from "@/lib/env";
 import { computeBlastRadius } from "@/lib/cascade";
 import { resolveTenantSchema, resolveTenantSchemasForCluster } from "@/lib/registry";
 import { requiredPhrase } from "@/lib/delete-confirm";
-import { confirmDelete } from "@/server/delete";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { SchemaBanner } from "@/components/schema-banner";
 
@@ -21,13 +20,12 @@ export default async function DeletePage({
   const isCluster = schema === env().systemSchemaName && table === "tb_cluster";
   const orphanSchemas = isCluster ? await resolveTenantSchemasForCluster(String(pk.id)) : undefined;
   const radius = await computeBlastRadius(schema, table, pk);
-  const action = confirmDelete.bind(null, schema, table, JSON.stringify(pk));
   return (
     <div>
       <SchemaBanner schema={schema} />
       <h1 className="my-3 text-lg font-semibold font-mono">Delete from {schema}.{table}</h1>
       <ConfirmDelete schema={schema} table={table} pkJson={JSON.stringify(pk)} radius={radius}
-        action={action} isBusinessUnit={isBusinessUnit} tenantSchema={tenantSchema}
+        isBusinessUnit={isBusinessUnit} tenantSchema={tenantSchema}
         orphanSchemas={orphanSchemas}
         requiredPhrase={requiredPhrase({ isBusinessUnit, dropSchema: null })} />
     </div>

@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { env } from "@/lib/env";
 import { computeBlastRadiusMany } from "@/lib/cascade";
 import { requiredPhrase, radiusTouchesBusinessUnits } from "@/lib/delete-confirm";
-import { confirmBatchDelete } from "@/server/delete";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { SchemaBanner } from "@/components/schema-banner";
 
@@ -17,7 +16,6 @@ export default async function DeleteBatchPage({
   const pks = JSON.parse(pksParam) as Record<string, unknown>[];
   if (!Array.isArray(pks) || pks.length === 0) notFound();
   const radius = await computeBlastRadiusMany(schema, table, pks);
-  const action = confirmBatchDelete.bind(null, schema, table, JSON.stringify(pks));
   const orphanWarning = radiusTouchesBusinessUnits(radius.byTable, env().systemSchemaName);
   return (
     <div>
@@ -31,7 +29,7 @@ export default async function DeleteBatchPage({
         </p>
       )}
       <ConfirmDelete schema={schema} table={table} pkJson={JSON.stringify(pks)} radius={radius}
-        action={action} isBusinessUnit={false} tenantSchema={null}
+        isBusinessUnit={false} tenantSchema={null}
         requiredPhrase={requiredPhrase({ isBusinessUnit: false, dropSchema: null })} />
     </div>
   );
