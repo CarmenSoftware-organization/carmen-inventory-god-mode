@@ -62,10 +62,12 @@ export async function POST(request: Request): Promise<Response> {
       const res = await executeCascadeMany(schema, table, pks, { onProgress });
       summary = `Deleted ${res.deleted} row(s)`;
     }
-    // mirror the prior server-action revalidation
-    if (isBusinessUnit) revalidatePath("/schemas");
-    if (isCluster) revalidatePath("/clusters");
-    revalidatePath(`/${schema}/${table}`);
+    // mirror the prior server-action revalidation (best-effort; the delete already committed)
+    try {
+      if (isBusinessUnit) revalidatePath("/schemas");
+      if (isCluster) revalidatePath("/clusters");
+      revalidatePath(`/${schema}/${table}`);
+    } catch { /* revalidation is best-effort; the delete already committed */ }
     return { summary, redirect };
   });
 }

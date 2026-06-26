@@ -67,7 +67,7 @@ export function ConfirmDelete({
         {running ? "Deleting…" : "Permanently delete"}
       </button>
 
-      <OperationProgress state={state} />
+      <OperationProgress state={state} rolledBackOnError />
     </form>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 import type { OperationState } from "@/lib/operation-stream";
 
-export function OperationProgress({ state }: { state: OperationState }) {
+export function OperationProgress({ state, rolledBackOnError }: { state: OperationState; rolledBackOnError?: boolean }) {
   if (state.phase === "idle") return null;
   const determinate = state.total != null && state.total > 0;
   const pct = determinate ? Math.min(100, Math.round((state.done / state.total!) * 100)) : null;
@@ -25,7 +25,7 @@ export function OperationProgress({ state }: { state: OperationState }) {
       {state.phase === "error" && (
         <div className="text-sm text-red-700">
           <p>{state.error}</p>
-          <p className="text-xs text-red-600">No changes were applied — the operation was rolled back.</p>
+          {rolledBackOnError && <p className="text-xs text-red-600">No changes were applied — the operation was rolled back.</p>}
         </div>
       )}
     </div>

@@ -25,6 +25,12 @@ beforeAll(async () => {
     CREATE SCHEMA app;
     CREATE TABLE app.p (id int primary key);
     INSERT INTO app.p VALUES (1),(2);
+    CREATE TABLE "CARMEN_SYSTEM".tb_cluster (id uuid primary key default gen_random_uuid());
+    CREATE TABLE "CARMEN_SYSTEM".tb_business_unit (
+      id uuid primary key default gen_random_uuid(),
+      cluster_id uuid,
+      db_connection jsonb
+    );
   `);
   const { ensureAuditTable } = await import("@/lib/audit");
   await ensureAuditTable();
@@ -73,4 +79,42 @@ test("streams progress and deletes the selected rows", async () => {
   const { getSql } = await import("@/lib/db");
   const n = await getSql().unsafe(`SELECT count(*)::int n FROM app.p`);
   expect(n[0].n).toBe(0);
+});
+
+test("single cluster delete with dropSchema drops tenant schemas and redirects to /clusters", async () => {
+  const { getSql } = await import("@/lib/db");
+  const sql = getSql();
+
+  // Create a cluster and a business unit whose tenant schema we want dropped.
+  // resolveTenantSchemasForCluster queries tb_business_unit.cluster_id + db_connection->>'schema'.
+  const [{ id: clusterId }] = await sql.unsafe<{ id: string }[]>(
+    `INSERT INTO "CARMEN_SYSTEM".tb_cluster DEFAULT VALUES RETURNING id::text`,
+  );
+  // Embed the JSON object as a literal (not a parameterized string) to avoid double-encoding by postgres.js.
+  await sql.unsafe(
+    `INSERT INTO "CARMEN_SYSTEM".tb_business_unit (cluster_id, db_connection)
+     VALUES ($1::uuid, '{"schema":"test_cluster_tenant"}'::jsonb)`,
+    [clusterId],
+  );
+  await sql.unsafe(`CREATE SCHEMA "test_cluster_tenant"`);
+
+  const { POST } = await import("@/app/api/ops/cascade-delete/route");
+  const res = await POST(req({
+    schema: "CARMEN_SYSTEM", table: "tb_cluster",
+    pks: [{ id: clusterId }], dropSchema: true, confirm: "DELETE",
+  }));
+
+  expect(res.status).toBe(200);
+  const events = await collect(res);
+
+  // A "Dropping schema …" step must appear in the stream.
+  expect(events.some((e) => e.type === "step" && String(e.label).startsWith("Dropping schema"))).toBe(true);
+  // Final event is done with redirect to /clusters.
+  expect(events.at(-1)).toMatchObject({ type: "done", redirect: "/clusters" });
+
+  // The tenant schema must actually be gone.
+  const schemaCheck = await sql.unsafe(
+    `SELECT nspname FROM pg_namespace WHERE nspname = 'test_cluster_tenant'`,
+  );
+  expect(schemaCheck).toHaveLength(0);
 });

@@ -11,6 +11,7 @@ export function RunMigrations() {
         className="rounded bg-black px-4 py-2 font-semibold text-white disabled:opacity-50">
         {running ? "Running…" : "Run migrations"}
       </button>
+      {/* rolledBackOnError intentionally omitted — migrations self-commit per task and are not wrapped in a single transaction */}
       <OperationProgress state={state} />
     </div>
   );

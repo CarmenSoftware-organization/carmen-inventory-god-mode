@@ -15,8 +15,14 @@ test("shows percent + label when determinate and running", () => {
   expect(screen.getByText(/75% · Deleting x…/)).toBeInTheDocument();
 });
 
-test("error state spells out the rollback", () => {
-  render(<OperationProgress state={{ phase: "error", done: 0, error: "boom" }} />);
+test("error state with rolledBackOnError spells out the rollback", () => {
+  render(<OperationProgress state={{ phase: "error", done: 0, error: "boom" }} rolledBackOnError />);
   expect(screen.getByText("boom")).toBeInTheDocument();
   expect(screen.getByText(/No changes were applied — the operation was rolled back\./)).toBeInTheDocument();
+});
+
+test("error state without rolledBackOnError shows error but not the rollback claim", () => {
+  render(<OperationProgress state={{ phase: "error", done: 0, error: "boom" }} />);
+  expect(screen.getByText("boom")).toBeInTheDocument();
+  expect(screen.queryByText(/No changes were applied — the operation was rolled back\./)).not.toBeInTheDocument();
 });
