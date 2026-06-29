@@ -7,7 +7,7 @@ points at the real dev DB — treat cascade delete / `DROP SCHEMA` as prod data.
 (Setup & safety: README.md.)
 
 ## Commands
-- `bun run dev`/`start` — port **3305** (not 3000). `bun run dev` = `dev:local` (`.env.local`); `bun run dev:prod` uses `.env.prod`. `bun run test` (Vitest — never `bun test`), `bun run typecheck`, `bun run lint`, `bun run migrate`.
+- `bun run dev`/`start` — port **3305** (not 3000), set via `PORT` in the env file. `bun run dev` = `dev:local` (`.env.local`); `bun run dev:prod` uses `.env.prod`. `bun run test` (Vitest — never `bun test`), `bun run typecheck`, `bun run lint`, `bun run migrate`.
 - E2E: `node_modules/.bin/playwright test` (auto-starts/reuses the dev server). `bun <file.ts>` auto-loads `.env.local`.
 
 ## Tests
