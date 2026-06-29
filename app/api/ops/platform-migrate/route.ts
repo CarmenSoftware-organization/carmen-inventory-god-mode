@@ -48,6 +48,23 @@ async function auditRun(
   );
 }
 
+/** Audit the schema bootstrap as its own action, for both success and failure. */
+async function auditSchemaCreate(schema: string, actor: string, ok: boolean): Promise<void> {
+  await ensureAuditTable();
+  await withTransaction(null, (tx) =>
+    writeAudit(tx, {
+      actor,
+      schemaName: schema,
+      tableName: null,
+      operation: "CREATE_SCHEMA",
+      pk: null,
+      oldValues: null,
+      newValues: { schema, ok },
+      statement: `CREATE SCHEMA IF NOT EXISTS "${schema}"`,
+    }),
+  );
+}
+
 export async function POST(request: Request): Promise<Response> {
   let session: Awaited<ReturnType<typeof requireAuth>>;
   try {
@@ -110,7 +127,19 @@ export async function POST(request: Request): Promise<Response> {
     try {
       if (bootstrap) {
         onProgress({ type: "log", line: `$ CREATE SCHEMA IF NOT EXISTS "${schemaName}"  (bootstrap)`, stream: "out" });
-        await ensureSchemaExists(schemaName);
+        let created = false;
+        try {
+          await ensureSchemaExists(schemaName);
+          created = true;
+        } finally {
+          // Audit the bootstrap attempt itself (success or failure); never let an
+          // audit error mask the original CREATE SCHEMA failure.
+          try {
+            await auditSchemaCreate(schemaName, actor, created);
+          } catch (auditErr) {
+            onProgress({ type: "log", line: `audit (CREATE_SCHEMA) failed: ${auditErr instanceof Error ? auditErr.message : String(auditErr)}`, stream: "err" });
+          }
+        }
       }
       onProgress({ type: "log", line: `$ bun ${args.join(" ")}  (cwd=${cwd}, target=${masked}, schema=${schemaName})`, stream: "out" });
       const { code } = await runProcess({

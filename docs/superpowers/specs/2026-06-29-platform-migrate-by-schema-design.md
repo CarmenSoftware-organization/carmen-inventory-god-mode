@@ -104,7 +104,13 @@ app/(god)/platform-migrations/page.tsx  load listSchemaNames(); pass schemas + d
 - Identifier quoted via `ident()` from `lib/sql-guard`.
 - Deterministic (no reliance on Prisma's create-schema behavior) and lets seeds
   run on a freshly created schema once migrations have been deployed.
-- Audited as its own action (op `schema-create`, target schema, actor).
+- Audited as its own action: a dedicated `tb_god_mode_audit` row with
+  `operation = "CREATE_SCHEMA"` (a new value in the audit `Operation` union,
+  symmetric with the existing `DROP_SCHEMA`; also surfaced in the `/audit` filter),
+  `schemaName` = target, `newValues = { schema, ok }`, written for **both success
+  and failure** of the bootstrap. The bootstrap audit is best-effort — an audit
+  error never masks the original `CREATE SCHEMA` failure. This is separate from the
+  `MIGRATION` run-audit row written after the subprocess.
 
 ### Route changes (`app/api/ops/platform-migrate/route.ts`)
 

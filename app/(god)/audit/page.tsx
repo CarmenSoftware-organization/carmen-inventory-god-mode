@@ -1,7 +1,7 @@
 import { listAudit, type Operation } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
-const OPS: Operation[] = ["INSERT", "UPDATE", "DELETE", "CASCADE_DELETE", "DROP_SCHEMA", "RAW_SQL"];
+const OPS: Operation[] = ["INSERT", "UPDATE", "DELETE", "CASCADE_DELETE", "CREATE_SCHEMA", "DROP_SCHEMA", "RAW_SQL"];
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ schema?: string; table?: string; operation?: string }> }) {
   const sp = await searchParams;

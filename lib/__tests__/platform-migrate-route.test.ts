@@ -125,6 +125,47 @@ test("new schema on a write op requires confirmCreateSchema, then bootstraps it"
   expect(buildSubprocessEnv).toHaveBeenCalledWith("NEW_ENV");
 });
 
+test("new-schema write audits the CREATE_SCHEMA bootstrap as its own action (success)", async () => {
+  const { POST } = await import("@/app/api/ops/platform-migrate/route");
+  const { writeAudit } = await import("@/lib/audit");
+  (writeAudit as ReturnType<typeof vi.fn>).mockClear();
+  const res = await POST(req({ opId: "prisma-deploy", schema: "NEW_ENV", confirm: "NEW_ENV", confirmCreateSchema: true }));
+  expect(res.status).toBe(200);
+  await collect(res);
+  // a dedicated CREATE_SCHEMA audit row for the bootstrap...
+  expect(writeAudit).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      operation: "CREATE_SCHEMA", schemaName: "NEW_ENV",
+      newValues: expect.objectContaining({ schema: "NEW_ENV", ok: true }),
+    }),
+  );
+  // ...plus the separate MIGRATION run row
+  expect(writeAudit).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ operation: "MIGRATION", schemaName: "NEW_ENV" }),
+  );
+});
+
+test("a failed schema bootstrap still audits CREATE_SCHEMA (ok:false), errors, and never spawns", async () => {
+  const { ensureSchemaExists } = await import("@/lib/schema-bootstrap");
+  (ensureSchemaExists as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("permission denied to create schema"));
+  const { writeAudit } = await import("@/lib/audit");
+  (writeAudit as ReturnType<typeof vi.fn>).mockClear();
+  const { POST } = await import("@/app/api/ops/platform-migrate/route");
+  const res = await POST(req({ opId: "prisma-deploy", schema: "NEW_ENV", confirm: "NEW_ENV", confirmCreateSchema: true }));
+  const events = await collect(res);
+  expect(events.at(-1)).toMatchObject({ type: "error" });
+  expect(runProcess).not.toHaveBeenCalled();
+  expect(writeAudit).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      operation: "CREATE_SCHEMA", schemaName: "NEW_ENV",
+      newValues: expect.objectContaining({ ok: false }),
+    }),
+  );
+});
+
 test("tenant op rejects an unknown --bu and accepts a valid one", async () => {
   const { POST } = await import("@/app/api/ops/platform-migrate/route");
   const bad = await POST(req({ opId: "tenant-apply", schema: SCHEMA, confirm: SCHEMA, bu: "ZZZ" }));
