@@ -73,6 +73,12 @@ environment silently falls back to Next's default **3000**. This is the same
 key-completeness rule that already applies to the other env vars (keep `.env.local` /
 `.env.prod` / `.env` key-complete with each other).
 
+Note also that, with the `-p` flag gone, an exported `PORT` in the developer's shell
+takes precedence over the env-file value (`process.env` is checked before dotenv values),
+so a stray `export PORT=…` would override 3305 — and Playwright (hardcoded to 3305) would
+then fail to find the server. Unset such a shell var if the dev server binds an unexpected
+port.
+
 ## What is committed vs. local-only
 
 `.env`, `.env.local`, `.env.prod` are gitignored (`.env*`), so edits to them are
