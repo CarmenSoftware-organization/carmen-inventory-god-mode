@@ -19,3 +19,20 @@ permanent — there is no undo.** The audit log is the only recovery record.
 - Deleting a business unit can optionally `DROP SCHEMA` its tenant database (off by default; requires typing the schema name).
 - Raw SQL writes require an explicit Commit after a preview.
 - `CASCADE_MAX_ROWS` / `CASCADE_MAX_DEPTH` cap the blast radius; an over-cap cascade is refused.
+
+### Platform migrations page
+
+`/platform-migrations` runs the migration scripts of the sibling
+`@repo/prisma-shared-schema-platform` package by spawning its own commands
+(`prisma migrate deploy`, `db:tenant-views:apply`, `db:seed.*`). It requires:
+
+- `PLATFORM_PACKAGE_DIR` — path to the package (defaults to
+  `../carmen-turborepo-backend-v2/packages/prisma-shared-schema-platform`).
+  The repo must be checked out with `node_modules` installed; `bun` and (for
+  tenant views) `psql` must be on PATH.
+- `SYSTEM_DIRECT_URL` — Prisma `directUrl` (non-pooled) for migrations/seeds.
+  Defaults to `SYSTEM_DATABASE_URL` when unset.
+
+Migrations run against the DB this instance is pointed at (the banner shows the
+target). Writes require typing the database name; resets need a second
+confirmation. Every run is recorded in `tb_god_mode_audit`.

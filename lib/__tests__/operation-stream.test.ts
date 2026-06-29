@@ -49,3 +49,18 @@ test("reducer: error sets error phase", () => {
   const s = reduceOperation(initialOperationState, { type: "error", message: "boom" });
   expect(s).toMatchObject({ phase: "error", error: "boom" });
 });
+
+test("log events accumulate into state.logs and set phase running", () => {
+  let s = reduceOperation(initialOperationState, { type: "log", line: "a" });
+  s = reduceOperation(s, { type: "log", line: "b", stream: "err" });
+  expect(s.phase).toBe("running");
+  expect(s.logs).toEqual(["a", "b"]);
+});
+
+test("log buffer is bounded to the last 1000 lines", () => {
+  let s = initialOperationState;
+  for (let i = 0; i < 1100; i++) s = reduceOperation(s, { type: "log", line: `L${i}` });
+  expect(s.logs!.length).toBe(1000);
+  expect(s.logs![0]).toBe("L100");
+  expect(s.logs!.at(-1)).toBe("L1099");
+});
