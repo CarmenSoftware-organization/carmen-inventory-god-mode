@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "bun run dev:local",
-    "dev:local": "bun --env-file=.env.local next dev -p 3305",
-    "dev:prod": "bun --env-file=.env.prod next dev -p 3305",
+    "dev:local": "bun --env-file=.env.local next dev",
+    "dev:prod": "bun --env-file=.env.prod next dev",
     "build": "next build",
-    "start": "next start -p 3305",
+    "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
