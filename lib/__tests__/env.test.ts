@@ -45,3 +45,18 @@ test("insecure tls only true for the literal string 'true'", () => {
 test("rejects a non-url base url", () => {
   expect(() => loadEnv({ ...base, BACKEND_API_BASE_URL: "not-a-url" })).toThrow();
 });
+
+test("systemDirectUrl defaults to systemDatabaseUrl when SYSTEM_DIRECT_URL unset", () => {
+  const env = loadEnv(base);
+  expect(env.systemDirectUrl).toBe(base.SYSTEM_DATABASE_URL);
+});
+
+test("systemDirectUrl uses SYSTEM_DIRECT_URL when present", () => {
+  const env = loadEnv({ ...base, SYSTEM_DIRECT_URL: "postgresql://u:p@direct:5432/postgres" });
+  expect(env.systemDirectUrl).toBe("postgresql://u:p@direct:5432/postgres");
+});
+
+test("platformPackageDir is undefined by default and passes through when set", () => {
+  expect(loadEnv(base).platformPackageDir).toBeUndefined();
+  expect(loadEnv({ ...base, PLATFORM_PACKAGE_DIR: "/x/pkg" }).platformPackageDir).toBe("/x/pkg");
+});

@@ -12,6 +12,8 @@ const schema = z.object({
   BACKEND_API_BASE_URL: z.string().url().optional(),
   BACKEND_API_APP_ID: z.string().min(1).default("42ab2083-5dbd-47fc-bb32-3de97dc0cd89"),
   BACKEND_API_INSECURE_TLS: z.string().optional(),
+  SYSTEM_DIRECT_URL: z.string().min(1).optional(),
+  PLATFORM_PACKAGE_DIR: z.string().min(1).optional(),
 });
 
 export type Env = {
@@ -27,6 +29,8 @@ export type Env = {
   backendApiAppId: string;
   backendApiInsecureTls: boolean;
   gatewayEnabled: boolean;
+  systemDirectUrl: string;
+  platformPackageDir?: string;
 };
 
 export function loadEnv(raw: Record<string, string | undefined>): Env {
@@ -44,6 +48,8 @@ export function loadEnv(raw: Record<string, string | undefined>): Env {
     backendApiAppId: p.BACKEND_API_APP_ID,
     backendApiInsecureTls: p.BACKEND_API_INSECURE_TLS === "true",
     gatewayEnabled: !!p.BACKEND_API_BASE_URL,
+    systemDirectUrl: p.SYSTEM_DIRECT_URL ?? p.SYSTEM_DATABASE_URL,
+    platformPackageDir: p.PLATFORM_PACKAGE_DIR,
   };
 }
 
