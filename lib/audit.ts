@@ -34,18 +34,20 @@ export async function writeAudit(tx: TransactionSql, e: AuditEntry): Promise<voi
 }
 
 export async function listAudit(filter: { schema?: string; table?: string; operation?: Operation; limit?: number } = {}) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const conds: string[] = []; const args: any[] = [];
+  const conds: string[] = []; const args: (string | number)[] = [];
   if (filter.schema) { args.push(filter.schema); conds.push(`schema_name = $${args.length}`); }
   if (filter.table) { args.push(filter.table); conds.push(`table_name = $${args.length}`); }
   if (filter.operation) { args.push(filter.operation); conds.push(`operation = $${args.length}`); }
   args.push(Math.min(filter.limit ?? 100, 500));
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
-  const rows = await getSql().unsafe(
+  const rows = (await getSql().unsafe(
     `SELECT id::text, at::text, actor, schema_name, table_name, operation, pk, old_values, new_values, statement
-     FROM ${auditRel()} ${where} ORDER BY at DESC LIMIT $${args.length}`, args);
+     FROM ${auditRel()} ${where} ORDER BY at DESC LIMIT $${args.length}`, args)) as unknown as {
+    id: string; at: string; actor: string; schema_name: string; table_name: string | null;
+    operation: string; pk: unknown; old_values: unknown; new_values: unknown; statement: string | null;
+  }[];
   const parseJson = (v: unknown) => (typeof v === "string" ? JSON.parse(v) : v);
-  return rows.map((r: any) => ({
+  return rows.map((r) => ({
     id: r.id, at: r.at, actor: r.actor, schemaName: r.schema_name, tableName: r.table_name,
     operation: r.operation as Operation,
     pk: r.pk == null ? null : parseJson(r.pk),

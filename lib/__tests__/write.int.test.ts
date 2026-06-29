@@ -31,7 +31,7 @@ test("applyUpdate changes the row and writes audit", async () => {
   expect(res.after.name).toBe("ONE");
   expect(res.before.name).toBe("one");
   const audit = await listAudit({ operation: "UPDATE", limit: 1 });
-  expect((audit[0].newValues as any).name).toBe("ONE");
+  expect((audit[0].newValues as { name: string }).name).toBe("ONE");
 });
 
 test("applySingleDelete removes the row and audits", async () => {

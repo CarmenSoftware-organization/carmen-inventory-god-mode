@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { orderTablesForDeletion, tableKey, type TableRef } from "@/lib/topo";
+import { orderTablesForDeletion, type TableRef } from "@/lib/topo";
 import type { ForeignKey } from "@/lib/introspect";
 
 const t = (table: string): TableRef => ({ schema: "app", table });

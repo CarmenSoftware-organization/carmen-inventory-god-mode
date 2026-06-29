@@ -15,8 +15,7 @@ export function whereFromPk(pk: Record<string, unknown>, startIndex: number): { 
 
 async function readOne(schema: string, table: string, pk: Record<string, unknown>): Promise<Record<string, unknown> | null> {
   const { clause, args } = whereFromPk(pk, 1);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rows = await getSql().unsafe(`SELECT * FROM ${qualified(schema, table)} WHERE ${clause} LIMIT 1`, args as any[]);
+  const rows = await getSql().unsafe(`SELECT * FROM ${qualified(schema, table)} WHERE ${clause} LIMIT 1`, args as (string | number | boolean | null)[]);
   return (rows[0] as Record<string, unknown>) ?? null;
 }
 
@@ -28,8 +27,7 @@ export async function applyInsert(schema: string, table: string, values: Record<
   const args = cols.map((c) => values[c]);
   await ensureAuditTable();
   return withTransaction(null, async (tx) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows = await tx.unsafe(`INSERT INTO ${qualified(schema, table)} (${colSql}) VALUES (${ph}) RETURNING *`, args as any[]);
+    const rows = await tx.unsafe(`INSERT INTO ${qualified(schema, table)} (${colSql}) VALUES (${ph}) RETURNING *`, args as (string | number | boolean | null)[]);
     const row = rows[0] as Record<string, unknown>;
     await writeAudit(tx, { actor, schemaName: schema, tableName: table, operation: "INSERT", pk: null, oldValues: null, newValues: row, statement: `INSERT INTO ${qualified(schema, table)}` });
     return row;
@@ -46,8 +44,7 @@ export async function applyUpdate(schema: string, table: string, pk: Record<stri
   const { clause, args: pkArgs } = whereFromPk(pk, cols.length + 1);
   await ensureAuditTable();
   return withTransaction(null, async (tx) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows = await tx.unsafe(`UPDATE ${qualified(schema, table)} SET ${setSql} WHERE ${clause} RETURNING *`, [...setArgs, ...pkArgs] as any[]);
+    const rows = await tx.unsafe(`UPDATE ${qualified(schema, table)} SET ${setSql} WHERE ${clause} RETURNING *`, [...setArgs, ...pkArgs] as (string | number | boolean | null)[]);
     const after = rows[0] as Record<string, unknown>;
     await writeAudit(tx, { actor, schemaName: schema, tableName: table, operation: "UPDATE", pk, oldValues: before, newValues: after, statement: `UPDATE ${qualified(schema, table)}` });
     return { before, after };
@@ -61,8 +58,7 @@ export async function applySingleDelete(schema: string, table: string, pk: Recor
   const { clause, args } = whereFromPk(pk, 1);
   await ensureAuditTable();
   return withTransaction(null, async (tx) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await tx.unsafe(`DELETE FROM ${qualified(schema, table)} WHERE ${clause}`, args as any[]);
+    await tx.unsafe(`DELETE FROM ${qualified(schema, table)} WHERE ${clause}`, args as (string | number | boolean | null)[]);
     await writeAudit(tx, { actor, schemaName: schema, tableName: table, operation: "DELETE", pk, oldValues: before, newValues: null, statement: `DELETE FROM ${qualified(schema, table)}` });
     return before;
   });

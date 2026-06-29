@@ -27,5 +27,5 @@ test("writeAudit persists an entry inside a txn", async () => {
   const entries = await listAudit({ limit: 10 });
   expect(entries[0].operation).toBe("DELETE");
   expect(entries[0].actor).toBe("tester");
-  expect((entries[0].pk as any).id).toBe(1);
+  expect((entries[0].pk as { id: number }).id).toBe(1);
 });
