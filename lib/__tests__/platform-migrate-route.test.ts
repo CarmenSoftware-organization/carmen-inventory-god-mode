@@ -121,6 +121,8 @@ test("new schema on a write op requires confirmCreateSchema, then bootstraps it"
   expect(ok.status).toBe(200);
   await collect(ok);
   expect(ensureSchemaExists).toHaveBeenCalledWith("NEW_ENV");
+  const { buildSubprocessEnv } = await import("@/lib/platform-package");
+  expect(buildSubprocessEnv).toHaveBeenCalledWith("NEW_ENV");
 });
 
 test("tenant op rejects an unknown --bu and accepts a valid one", async () => {
