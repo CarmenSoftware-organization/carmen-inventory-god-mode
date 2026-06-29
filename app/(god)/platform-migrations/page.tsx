@@ -1,12 +1,15 @@
 import { PlatformMigrations } from "@/components/platform-migrations";
 import { CATALOG } from "@/lib/platform-migrations";
 import { listBusinessUnits } from "@/lib/registry";
+import { listSchemaNames } from "@/lib/introspect";
 import { listTenantFiles, targetDbInfo } from "@/lib/platform-package";
 
 export const dynamic = "force-dynamic";
 
 export default async function PlatformMigrationsPage() {
-  const [bus, tenantFiles] = await Promise.all([listBusinessUnits(), listTenantFiles()]);
+  const [bus, tenantFiles, schemas] = await Promise.all([
+    listBusinessUnits(), listTenantFiles(), listSchemaNames(),
+  ]);
   const buCodes = bus.filter((b) => b.isActive).map((b) => b.code);
   const target = targetDbInfo();
   return (
@@ -14,9 +17,13 @@ export default async function PlatformMigrationsPage() {
       <h1 className="my-3 text-lg font-semibold">Platform migrations</h1>
       <p className="mb-3 text-sm text-gray-600">
         Runs migration scripts of <code>@repo/prisma-shared-schema-platform</code> against the database
-        this instance manages, by spawning the package&apos;s own commands. Output streams live below.
+        this instance manages, by spawning the package&apos;s own commands. Pick the target schema below.
+        Output streams live.
       </p>
-      <PlatformMigrations target={target} catalog={CATALOG} buCodes={buCodes} tenantFiles={tenantFiles} />
+      <PlatformMigrations
+        target={target} catalog={CATALOG} buCodes={buCodes} tenantFiles={tenantFiles}
+        schemas={schemas} defaultSchema={target.schema}
+      />
     </div>
   );
 }

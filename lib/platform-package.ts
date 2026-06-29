@@ -21,22 +21,28 @@ export async function assertPackageDir(): Promise<void> {
   }
 }
 
-export function buildSubprocessEnv(): NodeJS.ProcessEnv {
+export function withSchemaParam(url: string, schema: string): string {
+  const u = new URL(url);
+  u.searchParams.set("schema", schema);
+  return u.toString();
+}
+
+export function buildSubprocessEnv(schema: string): NodeJS.ProcessEnv {
   const e = env();
   return {
     ...process.env,
-    SYSTEM_DATABASE_URL: e.systemDatabaseUrl,
-    SYSTEM_DIRECT_URL: e.systemDirectUrl,
-    SYSTEM_SCHEMA_NAME: e.systemSchemaName,
+    SYSTEM_DATABASE_URL: withSchemaParam(e.systemDatabaseUrl, schema),
+    SYSTEM_DIRECT_URL: withSchemaParam(e.systemDirectUrl, schema),
+    SYSTEM_SCHEMA_NAME: schema,
   };
 }
 
-export function targetDbInfo(): { host: string; database: string; schema: string; masked: string } {
+export function targetDbInfo(schema?: string): { host: string; database: string; schema: string; masked: string } {
   const u = new URL(env().systemDatabaseUrl);
   const host = u.port ? `${u.hostname}:${u.port}` : u.hostname;
   const database = decodeURIComponent(u.pathname.replace(/^\//, ""));
   const masked = `${u.protocol}//${u.username}@${host}/${database}`;
-  return { host, database, schema: env().systemSchemaName, masked };
+  return { host, database, schema: schema ?? env().systemSchemaName, masked };
 }
 
 export async function assertPsql(): Promise<void> {

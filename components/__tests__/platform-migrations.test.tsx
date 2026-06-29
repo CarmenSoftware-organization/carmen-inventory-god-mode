@@ -15,6 +15,8 @@ const props = {
   catalog: CATALOG,
   buCodes: ["T03"],
   tenantFiles: ["001_v_operational_product_list.up.sql"],
+  schemas: ["CARMEN_SYSTEM"],
+  defaultSchema: "CARMEN_SYSTEM",
 };
 
 test("shows the masked target DB banner", () => {
@@ -29,19 +31,19 @@ test("read-only op enables Run immediately", () => {
   expect(screen.getByRole("button", { name: /^Run$/i })).toBeEnabled();
 });
 
-test("write op keeps Run disabled until the DB name is typed", () => {
+test("write op keeps Run disabled until the schema name is typed", () => {
   render(<PlatformMigrations {...props} />);
   fireEvent.click(screen.getByLabelText(/apply pending migrations/i));
   const run = screen.getByRole("button", { name: /^Run$/i });
   expect(run).toBeDisabled();
-  fireEvent.change(screen.getByLabelText(/confirm/i), { target: { value: "carmen_platform" } });
+  fireEvent.change(screen.getByLabelText(/confirm/i), { target: { value: "CARMEN_SYSTEM" } });
   expect(run).toBeEnabled();
 });
 
 test("destructive op also requires the destroy checkbox", () => {
   render(<PlatformMigrations {...props} />);
   fireEvent.click(screen.getByLabelText(/prisma migrate reset/i));
-  fireEvent.change(screen.getByLabelText(/confirm/i), { target: { value: "carmen_platform" } });
+  fireEvent.change(screen.getByLabelText(/confirm/i), { target: { value: "CARMEN_SYSTEM" } });
   const run = screen.getByRole("button", { name: /^Run$/i });
   expect(run).toBeDisabled();
   fireEvent.click(screen.getByLabelText(/destroys data/i));

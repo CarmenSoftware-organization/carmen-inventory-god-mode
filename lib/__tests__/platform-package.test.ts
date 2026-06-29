@@ -25,12 +25,23 @@ test("targetDbInfo parses host/database/schema and masks the password", async ()
   expect(t.masked).not.toContain("s3cret");
 });
 
-test("buildSubprocessEnv injects DB vars; SYSTEM_DIRECT_URL defaults to SYSTEM_DATABASE_URL", async () => {
+test("withSchemaParam sets/replaces the schema query param and preserves others", async () => {
+  vi.resetModules();
+  const { withSchemaParam } = await import("@/lib/platform-package");
+  expect(withSchemaParam("postgresql://u:p@h:6432/db", "CARMEN_SYSTEM"))
+    .toBe("postgresql://u:p@h:6432/db?schema=CARMEN_SYSTEM");
+  expect(withSchemaParam("postgresql://u:p@h:6432/db?schema=OLD", "NEW_ENV"))
+    .toBe("postgresql://u:p@h:6432/db?schema=NEW_ENV");
+  expect(withSchemaParam("postgresql://u:p@h:6432/db?sslmode=require", "S"))
+    .toBe("postgresql://u:p@h:6432/db?sslmode=require&schema=S");
+});
+
+test("buildSubprocessEnv injects ?schema= into both URLs and sets SYSTEM_SCHEMA_NAME", async () => {
   vi.resetModules();
   const { buildSubprocessEnv } = await import("@/lib/platform-package");
-  const e = buildSubprocessEnv();
-  expect(e.SYSTEM_DATABASE_URL).toBe(base.SYSTEM_DATABASE_URL);
-  expect(e.SYSTEM_DIRECT_URL).toBe(base.SYSTEM_DATABASE_URL);
+  const e = buildSubprocessEnv("CARMEN_SYSTEM");
+  expect(e.SYSTEM_DATABASE_URL).toBe(`${base.SYSTEM_DATABASE_URL}?schema=CARMEN_SYSTEM`);
+  expect(e.SYSTEM_DIRECT_URL).toBe(`${base.SYSTEM_DATABASE_URL}?schema=CARMEN_SYSTEM`);
   expect(e.SYSTEM_SCHEMA_NAME).toBe("CARMEN_SYSTEM");
 });
 
