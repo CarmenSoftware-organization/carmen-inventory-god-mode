@@ -78,9 +78,19 @@ export function buildArgv(op: CatalogOp, args: { bu?: string; only?: string }): 
   return ["run", op.run, ...(extra.length ? ["--", ...extra] : [])];
 }
 
-export function canRun(op: CatalogOp, opts: { confirm: string; dbName: string; destroyChecked: boolean }): boolean {
+export function validateSchemaName(name: string, existing: string[]): "known" | "new" | "invalid" {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) return "invalid";
+  return existing.includes(name) ? "known" : "new";
+}
+
+export function canRun(
+  op: CatalogOp,
+  opts: { confirm: string; schema: string; knownSchemas: string[]; destroyChecked: boolean; createChecked: boolean },
+): boolean {
+  if (validateSchemaName(opts.schema, opts.knownSchemas) === "invalid") return false;
   if (op.readonly || !op.writes) return true;
-  if (opts.confirm !== opts.dbName) return false;
+  if (opts.confirm !== opts.schema) return false;
   if (op.destructive && !opts.destroyChecked) return false;
+  if (validateSchemaName(opts.schema, opts.knownSchemas) === "new" && !opts.createChecked) return false;
   return true;
 }

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import {
-  CATALOG, findOp, validateBuCode, validateOnlyPrefix, buildArgv, canRun,
+  CATALOG, findOp, validateBuCode, validateOnlyPrefix, buildArgv, canRun, validateSchemaName,
 } from "@/lib/platform-migrations";
 
 test("catalog exposes the expected operation ids across groups", () => {
@@ -53,13 +53,35 @@ test("every catalog op satisfies the gate invariants", () => {
   }
 });
 
-test("canRun gates writes on the DB-name phrase and destructive on the checkbox", () => {
+test("validateSchemaName classifies known / new / invalid names", () => {
+  const existing = ["CARMEN_SYSTEM", "public"];
+  expect(validateSchemaName("CARMEN_SYSTEM", existing)).toBe("known");
+  expect(validateSchemaName("NEW_ENV", existing)).toBe("new");
+  expect(validateSchemaName("bad;name", existing)).toBe("invalid");
+  expect(validateSchemaName("1leading", existing)).toBe("invalid");
+  expect(validateSchemaName("", existing)).toBe("invalid");
+});
+
+test("canRun gates writes on the schema phrase, destructive checkbox, and new-schema checkbox", () => {
   const status = findOp("prisma-status")!;
   const deploy = findOp("prisma-deploy")!;
   const reset = findOp("migrate-reset")!;
-  expect(canRun(status, { confirm: "", dbName: "carmen", destroyChecked: false })).toBe(true);
-  expect(canRun(deploy, { confirm: "wrong", dbName: "carmen", destroyChecked: false })).toBe(false);
-  expect(canRun(deploy, { confirm: "carmen", dbName: "carmen", destroyChecked: false })).toBe(true);
-  expect(canRun(reset, { confirm: "carmen", dbName: "carmen", destroyChecked: false })).toBe(false);
-  expect(canRun(reset, { confirm: "carmen", dbName: "carmen", destroyChecked: true })).toBe(true);
+  const known = ["CARMEN_SYSTEM"];
+  const base = { schema: "CARMEN_SYSTEM", knownSchemas: known, destroyChecked: false, createChecked: false };
+
+  // read-only: runs as long as the schema is a valid name
+  expect(canRun(status, { ...base, confirm: "" })).toBe(true);
+  expect(canRun(status, { ...base, schema: "bad;name", confirm: "" })).toBe(false);
+
+  // write: confirm must equal the schema
+  expect(canRun(deploy, { ...base, confirm: "wrong" })).toBe(false);
+  expect(canRun(deploy, { ...base, confirm: "CARMEN_SYSTEM" })).toBe(true);
+
+  // destructive: also needs the destroy checkbox
+  expect(canRun(reset, { ...base, confirm: "CARMEN_SYSTEM" })).toBe(false);
+  expect(canRun(reset, { ...base, confirm: "CARMEN_SYSTEM", destroyChecked: true })).toBe(true);
+
+  // new schema on a write: needs the create checkbox
+  expect(canRun(deploy, { ...base, schema: "NEW_ENV", confirm: "NEW_ENV" })).toBe(false);
+  expect(canRun(deploy, { ...base, schema: "NEW_ENV", confirm: "NEW_ENV", createChecked: true })).toBe(true);
 });
