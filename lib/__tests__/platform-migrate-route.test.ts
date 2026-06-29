@@ -8,7 +8,7 @@ beforeAll(() => {
   process.env.SESSION_SECRET = "x".repeat(32);
 });
 
-vi.mock("@/lib/session", () => ({ requireAuth: vi.fn(async () => ({ authed: true })) }));
+vi.mock("@/lib/session", () => ({ requireAuth: vi.fn(async () => ({ authed: true, actor: "operator@example.com" })) }));
 vi.mock("@/lib/audit", () => ({ ensureAuditTable: vi.fn(async () => {}), writeAudit: vi.fn(async () => {}) }));
 vi.mock("@/lib/db", () => ({ withTransaction: vi.fn(async (_s: unknown, fn: (tx: unknown) => unknown) => fn({})) }));
 vi.mock("@/lib/registry", () => ({ listBusinessUnits: vi.fn(async () => [{ code: "T03", isActive: true }]) }));
@@ -134,4 +134,29 @@ test("accepts a valid --only prefix and passes it through to argv", async () => 
   expect(runProcess).toHaveBeenCalledWith(expect.objectContaining({
     args: ["run", "db:tenant-views:apply", "--", "--only", "001_v_operational"],
   }));
+});
+
+test("audits the run under the logged-in operator", async () => {
+  const { POST } = await import("@/app/api/ops/platform-migrate/route");
+  const res = await POST(req({ opId: "prisma-status" }));
+  expect(res.status).toBe(200);
+  await collect(res);
+  const { writeAudit } = await import("@/lib/audit");
+  expect(writeAudit).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ actor: "operator@example.com", operation: "MIGRATION" }),
+  );
+});
+
+test("rejects a concurrent run with 409 while one is in flight", async () => {
+  let release!: () => void;
+  const gate = new Promise<void>((r) => { release = r; });
+  runProcess.mockImplementationOnce(async (o: { onLine: (l: string, s: string) => void }) => { await gate; return { code: 0 }; });
+  const { POST } = await import("@/app/api/ops/platform-migrate/route");
+  const first = await POST(req({ opId: "prisma-status" }));
+  expect(first.status).toBe(200);
+  const second = await POST(req({ opId: "prisma-status" }));
+  expect(second.status).toBe(409);
+  release();
+  await collect(first); // drain so the lock resets for later tests
 });

@@ -46,6 +46,13 @@ test("buildArgv ignores bu/only on ops that do not accept them", () => {
   expect(buildArgv(findOp("seed")!, { bu: "T03", only: "x" })).toEqual(["run", "db:seed"]);
 });
 
+test("every catalog op satisfies the gate invariants", () => {
+  for (const op of CATALOG) {
+    if (op.destructive) expect(op.writes).toBe(true);
+    if (op.readonly) expect(op.writes).toBe(false);
+  }
+});
+
 test("canRun gates writes on the DB-name phrase and destructive on the checkbox", () => {
   const status = findOp("prisma-status")!;
   const deploy = findOp("prisma-deploy")!;

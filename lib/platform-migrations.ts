@@ -50,6 +50,11 @@ export const CATALOG: CatalogOp[] = [
     kind: "script", run: "db:mock:reset", writes: true, destructive: true },
 ];
 
+for (const op of CATALOG) {
+  if (op.destructive && !op.writes) throw new Error(`Invalid catalog op ${op.id}: destructive must imply writes`);
+  if (op.readonly && op.writes) throw new Error(`Invalid catalog op ${op.id}: readonly must not also write`);
+}
+
 export function findOp(id: string): CatalogOp | undefined {
   return CATALOG.find((o) => o.id === id);
 }

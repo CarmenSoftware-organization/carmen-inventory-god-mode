@@ -16,15 +16,22 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+let running = false;
+
 type Body = { opId: string; bu?: string; only?: string; confirm?: string; confirmDestroy?: boolean };
 
 const bad = (error: string, status: number) => Response.json({ error }, { status });
 
-async function auditRun(op: CatalogOp, args: { bu?: string; only?: string }, code: number): Promise<void> {
+async function auditRun(
+  op: CatalogOp,
+  args: { bu?: string; only?: string },
+  code: number,
+  actor: string,
+): Promise<void> {
   await ensureAuditTable();
   await withTransaction(null, (tx) =>
     writeAudit(tx, {
-      actor: env().godModeUserId ?? "god-mode",
+      actor,
       schemaName: env().systemSchemaName,
       tableName: null,
       operation: "MIGRATION",
@@ -37,8 +44,9 @@ async function auditRun(op: CatalogOp, args: { bu?: string; only?: string }, cod
 }
 
 export async function POST(request: Request): Promise<Response> {
+  let session: Awaited<ReturnType<typeof requireAuth>>;
   try {
-    await requireAuth();
+    session = await requireAuth();
   } catch {
     return bad("Unauthorized", 401);
   }
@@ -79,18 +87,26 @@ export async function POST(request: Request): Promise<Response> {
   const cwd = packageDir();
   const spawnEnv = buildSubprocessEnv();
   const masked = targetDbInfo().masked;
+  const actor = session.actor ?? "god";
+
+  if (running) return bad("A platform migration is already running", 409);
+  running = true;
 
   return streamOperation(async (onProgress) => {
-    onProgress({ type: "log", line: `$ bun ${args.join(" ")}  (cwd=${cwd}, target=${masked})`, stream: "out" });
-    const { code } = await runProcess({
-      command: "bun",
-      args,
-      cwd,
-      env: spawnEnv,
-      onLine: (line, stream) => onProgress({ type: "log", line, stream }),
-    });
-    await auditRun(op, { bu, only }, code);
-    if (code !== 0) throw new Error(`${op.label} failed (exit code ${code})`);
-    return { summary: `${op.label} completed (exit 0)` };
+    try {
+      onProgress({ type: "log", line: `$ bun ${args.join(" ")}  (cwd=${cwd}, target=${masked})`, stream: "out" });
+      const { code } = await runProcess({
+        command: "bun",
+        args,
+        cwd,
+        env: spawnEnv,
+        onLine: (line, stream) => onProgress({ type: "log", line, stream }),
+      });
+      await auditRun(op, { bu, only }, code, actor);
+      if (code !== 0) throw new Error(`${op.label} failed (exit code ${code})`);
+      return { summary: `${op.label} completed (exit 0)` };
+    } finally {
+      running = false;
+    }
   });
 }
