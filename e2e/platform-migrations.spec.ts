@@ -33,6 +33,9 @@ test("runs read-only prisma migration status and streams output", async ({
 
   await page.goto("/platform-migrations");
 
+  // The target banner reflects the selected schema (defaults to the system schema).
+  await expect(page.getByText(/schema/i).first()).toBeVisible();
+
   // Select the read-only "Prisma: migration status" operation.
   await page.getByLabel(/Prisma: migration status/i).check();
   await page.getByRole("button", { name: /^Run$/i }).click();
