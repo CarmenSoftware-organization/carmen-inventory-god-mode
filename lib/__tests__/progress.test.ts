@@ -33,3 +33,16 @@ test("emits a single error event when run throws, and no done", async () => {
   const res = streamOperation(async () => { throw new Error("boom"); });
   expect(await collect(res)).toEqual([{ type: "error", message: "boom" }]);
 });
+
+test("passes log events through the stream verbatim", async () => {
+  const res = streamOperation(async (onProgress) => {
+    onProgress({ type: "log", line: "hello", stream: "out" });
+    onProgress({ type: "log", line: "oops", stream: "err" });
+    return { summary: "done" };
+  });
+  expect(await collect(res)).toEqual([
+    { type: "log", line: "hello", stream: "out" },
+    { type: "log", line: "oops", stream: "err" },
+    { type: "done", summary: "done", redirect: undefined },
+  ]);
+});

@@ -1,6 +1,7 @@
 export type ProgressEvent =
   | { type: "step"; label: string; done?: number }
   | { type: "total"; total: number; title?: string }
+  | { type: "log"; line: string; stream?: "out" | "err" }
   | { type: "done"; summary: string; redirect?: string }
   | { type: "error"; message: string };
 

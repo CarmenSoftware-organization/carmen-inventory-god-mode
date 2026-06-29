@@ -8,6 +8,7 @@ export type OperationState = {
   label?: string;
   summary?: string;
   error?: string;
+  logs?: string[];
 };
 
 export const initialOperationState: OperationState = { phase: "idle", done: 0 };
@@ -18,6 +19,10 @@ export function reduceOperation(prev: OperationState, event: ProgressEvent): Ope
       return { ...prev, phase: "running", total: event.total, title: event.title ?? prev.title };
     case "step":
       return { ...prev, phase: "running", label: event.label, done: event.done ?? prev.done, total: prev.total };
+    case "log": {
+      const next = [...(prev.logs ?? []), event.line];
+      return { ...prev, phase: "running", logs: next.length > 1000 ? next.slice(-1000) : next };
+    }
     case "done":
       return { ...prev, phase: "done", summary: event.summary, done: prev.total ?? prev.done };
     case "error":
