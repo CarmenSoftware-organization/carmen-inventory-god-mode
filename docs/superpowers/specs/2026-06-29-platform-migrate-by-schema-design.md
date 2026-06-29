@@ -113,14 +113,17 @@ Body gains `schema: string` and `confirmCreateSchema?: boolean`. Order:
 1. `requireAuth` (401).
 2. Look up op (404). Existing `--bu`/`--only` validation unchanged.
 3. **Validate schema:** `validateSchemaName(schema, await listSchemaNames())`.
-   - `"invalid"` → 400.
-   - `"new"` → require `confirmCreateSchema === true`, else 400
-     (`Creating a new schema requires confirmCreateSchema: true`).
+   - `"invalid"` → 400 (always — injection safety, all ops).
+   - `"new"` **and the op writes** → require `confirmCreateSchema === true`, else
+     400 (`Creating a new schema requires confirmCreateSchema: true`). Read-only
+     ops against a non-existent schema are allowed without the gate — they create
+     nothing.
 4. **Confirm gate** (write ops, unchanged shape): `confirm` must equal the
    **chosen schema** (was the DB name); destructive ops still also require
    `confirmDestroy: true`.
 5. Preflight (`assertPackageDir`, `assertPsql` for tenant) — unchanged.
-6. If schema is `"new"`: `await ensureSchemaExists(schema)` (audited).
+6. If the op **writes** and schema is `"new"`: `await ensureSchemaExists(schema)`
+   (audited). Read-only ops never pre-create.
 7. Build subprocess env with `buildSubprocessEnv(schema)`; spawn + stream.
 8. Audit the run with the **chosen schema** (replaces `env().systemSchemaName`).
 
