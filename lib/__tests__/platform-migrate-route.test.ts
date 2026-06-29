@@ -93,6 +93,7 @@ test("tenant op rejects an unknown --bu and accepts a valid one", async () => {
   const { POST } = await import("@/app/api/ops/platform-migrate/route");
   const bad = await POST(req({ opId: "tenant-apply", confirm: "carmen_platform", bu: "ZZZ" }));
   expect(bad.status).toBe(400);
+  expect(runProcess).not.toHaveBeenCalled();
   const ok = await POST(req({ opId: "tenant-apply", confirm: "carmen_platform", bu: "T03" }));
   expect(ok.status).toBe(200);
   await collect(ok);
@@ -107,4 +108,30 @@ test("non-zero exit yields an error event", async () => {
   const res = await POST(req({ opId: "prisma-deploy", confirm: "carmen_platform" }));
   const events = await collect(res);
   expect(events.at(-1)).toMatchObject({ type: "error" });
+  const { writeAudit } = await import("@/lib/audit");
+  expect(writeAudit).toHaveBeenCalled();
+});
+
+test("rejects --only on an op that does not accept it", async () => {
+  const { POST } = await import("@/app/api/ops/platform-migrate/route");
+  const res = await POST(req({ opId: "prisma-deploy", confirm: "carmen_platform", only: "001_v" }));
+  expect(res.status).toBe(400);
+  expect(runProcess).not.toHaveBeenCalled();
+});
+
+test("rejects an --only prefix that matches no tenant file", async () => {
+  const { POST } = await import("@/app/api/ops/platform-migrate/route");
+  const res = await POST(req({ opId: "tenant-apply", confirm: "carmen_platform", only: "999_nope" }));
+  expect(res.status).toBe(400);
+  expect(runProcess).not.toHaveBeenCalled();
+});
+
+test("accepts a valid --only prefix and passes it through to argv", async () => {
+  const { POST } = await import("@/app/api/ops/platform-migrate/route");
+  const res = await POST(req({ opId: "tenant-apply", confirm: "carmen_platform", only: "001_v_operational" }));
+  expect(res.status).toBe(200);
+  await collect(res);
+  expect(runProcess).toHaveBeenCalledWith(expect.objectContaining({
+    args: ["run", "db:tenant-views:apply", "--", "--only", "001_v_operational"],
+  }));
 });
