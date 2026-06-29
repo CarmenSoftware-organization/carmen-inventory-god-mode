@@ -8,13 +8,16 @@ export type BusinessUnit = { id: string; code: string; name: string; clusterId: 
 export async function listBusinessUnits(): Promise<BusinessUnit[]> {
   const reg = qualified(env().systemSchemaName, "tb_business_unit");
   try {
-    const rows = await getSql().unsafe(
+    const rows = (await getSql().unsafe(
       `SELECT id::text, cluster_id::text AS cluster_id, code, name,
               COALESCE(is_active, true) AS is_active,
               db_connection->>'schema' AS tenant_schema
        FROM ${reg} ORDER BY code`,
-    );
-    return rows.map((r: any) => ({
+    )) as unknown as {
+      id: string; code: string; name: string; cluster_id: string | null;
+      is_active: boolean; tenant_schema: string | null;
+    }[];
+    return rows.map((r) => ({
       id: r.id, code: r.code, name: r.name, clusterId: r.cluster_id ?? null,
       isActive: r.is_active, tenantSchema: r.tenant_schema ?? null,
     }));
@@ -47,12 +50,15 @@ export async function listClusters(): Promise<Cluster[]> {
   const cl = qualified(env().systemSchemaName, "tb_cluster");
   const bu = qualified(env().systemSchemaName, "tb_business_unit");
   try {
-    const rows = await getSql().unsafe(
+    const rows = (await getSql().unsafe(
       `SELECT c.id::text, c.code, c.name, c.deleted_at::text AS deleted_at,
               (SELECT count(*) FROM ${bu} b WHERE b.cluster_id = c.id)::int AS business_unit_count
        FROM ${cl} c ORDER BY c.code`,
-    );
-    return rows.map((r: any) => ({
+    )) as unknown as {
+      id: string; code: string; name: string;
+      deleted_at: string | null; business_unit_count: number;
+    }[];
+    return rows.map((r) => ({
       id: r.id, code: r.code, name: r.name,
       deletedAt: r.deleted_at ?? null, businessUnitCount: r.business_unit_count,
     }));
@@ -64,10 +70,10 @@ export async function listClusters(): Promise<Cluster[]> {
 
 export async function resolveTenantSchemasForCluster(clusterId: string): Promise<string[]> {
   const bu = qualified(env().systemSchemaName, "tb_business_unit");
-  const rows = await getSql().unsafe(
+  const rows = (await getSql().unsafe(
     `SELECT DISTINCT db_connection->>'schema' AS tenant_schema
      FROM ${bu} WHERE cluster_id = $1::uuid AND db_connection->>'schema' IS NOT NULL`,
     [clusterId],
-  );
-  return rows.map((r: any) => r.tenant_schema as string);
+  )) as unknown as { tenant_schema: string }[];
+  return rows.map((r) => r.tenant_schema);
 }

@@ -14,7 +14,7 @@ points at the real dev DB — treat cascade delete / `DROP SCHEMA` as prod data.
 ## Tests
 - `.test.ts` → node; `.test.tsx` → jsdom; `.int.test.ts` → embedded-postgres via `@/test/pg` `startPg()` (fresh container/file, `fileParallelism: false`, 60s timeout).
 - Route/int tests mock `@/lib/session` (`requireAuth` throws on unauth) + `next/cache` (`revalidatePath`); test a handler by importing `POST` and passing a `Request`.
-- `bun run lint` is **not** clean repo-wide (pre-existing `no-explicit-any` in older `lib/*`, `components/sql-console.tsx`). Keep new files lint-clean; don't fix unrelated lint.
+- `bun run lint` is **clean** repo-wide — keep it that way. Type `postgres` query results via `(await sql.unsafe(...)) as unknown as { … }[]`; pass dynamic `unknown[]` SQL params as `as (string | number | boolean | null)[]` (don't reach for `any`).
 
 ## Postgres gotchas
 - Unquoted identifiers are lowercased (`CREATE SCHEMA Foo`→`foo`); quote to match `ident()`/`qualified()` from `lib/sql-guard`.

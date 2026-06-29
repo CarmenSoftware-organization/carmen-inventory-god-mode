@@ -228,7 +228,7 @@ test("audits the run with the chosen schema and operator", async () => {
 test("rejects a concurrent run with 409 while one is in flight", async () => {
   let release!: () => void;
   const gate = new Promise<void>((r) => { release = r; });
-  runProcess.mockImplementationOnce(async (o: { onLine: (l: string, s: string) => void }) => { await gate; return { code: 0 }; });
+  runProcess.mockImplementationOnce(async () => { await gate; return { code: 0 }; });
   const { POST } = await import("@/app/api/ops/platform-migrate/route");
   const first = await POST(req({ opId: "prisma-status", schema: SCHEMA }));
   expect(first.status).toBe(200);

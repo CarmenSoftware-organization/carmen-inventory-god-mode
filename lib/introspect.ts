@@ -10,25 +10,25 @@ export type TableShape = { columns: ColumnInfo[]; primaryKey: string[] };
 const ON_DELETE: Record<string, OnDelete> = { a: "NO ACTION", r: "RESTRICT", c: "CASCADE", n: "SET NULL", d: "SET DEFAULT" };
 
 export async function listSchemaNames(): Promise<string[]> {
-  const rows = await getSql().unsafe(
+  const rows = (await getSql().unsafe(
     `SELECT nspname FROM pg_namespace WHERE nspname NOT LIKE 'pg_%' AND nspname <> 'information_schema' ORDER BY nspname`,
-  );
-  return rows.map((r: any) => r.nspname as string);
+  )) as unknown as { nspname: string }[];
+  return rows.map((r) => r.nspname);
 }
 
 export async function listTables(schema: string): Promise<TableInfo[]> {
-  const rows = await getSql().unsafe(
+  const rows = (await getSql().unsafe(
     `SELECT c.relname AS name, GREATEST(c.reltuples, 0)::bigint AS estimated_rows
      FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
      WHERE n.nspname = $1 AND c.relkind = 'r' ORDER BY c.relname`,
     [schema],
-  );
-  return rows.map((r: any) => ({ schema, name: r.name, estimatedRows: Number(r.estimated_rows) }));
+  )) as unknown as { name: string; estimated_rows: string | number }[];
+  return rows.map((r) => ({ schema, name: r.name, estimatedRows: Number(r.estimated_rows) }));
 }
 
 export async function describeTable(schema: string, table: string): Promise<TableShape> {
   const reg = qualified(schema, table);
-  const cols = await getSql().unsafe(
+  const cols = (await getSql().unsafe(
     `SELECT a.attname AS name,
             format_type(a.atttypid, a.atttypmod) AS data_type,
             t.typname AS udt_name,
@@ -46,23 +46,26 @@ export async function describeTable(schema: string, table: string): Promise<Tabl
      WHERE a.attrelid = $1::regclass AND a.attnum > 0 AND NOT a.attisdropped
      ORDER BY a.attnum`,
     [reg],
-  );
-  const columns: ColumnInfo[] = cols.map((c: any) => ({
+  )) as unknown as {
+    name: string; data_type: string; udt_name: string;
+    is_nullable: boolean; default: string | null; is_primary_key: boolean;
+  }[];
+  const columns: ColumnInfo[] = cols.map((c) => ({
     name: c.name, dataType: c.data_type, udtName: c.udt_name,
     isNullable: c.is_nullable, default: c.default ?? null, isPrimaryKey: c.is_primary_key,
   }));
-  const pkRows = await getSql().unsafe(
+  const pkRows = (await getSql().unsafe(
     `SELECT a.attname FROM pg_index i
      JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
      WHERE i.indrelid = $1::regclass AND i.indisprimary
      ORDER BY array_position(i.indkey::smallint[], a.attnum)`,
     [reg],
-  );
-  return { columns, primaryKey: pkRows.map((r: any) => r.attname as string) };
+  )) as unknown as { attname: string }[];
+  return { columns, primaryKey: pkRows.map((r) => r.attname) };
 }
 
 export async function listForeignKeys(schema: string): Promise<ForeignKey[]> {
-  const rows = await getSql().unsafe(
+  const rows = (await getSql().unsafe(
     `SELECT nc.nspname AS child_schema, child.relname AS child_table,
             array_agg(ac.attname ORDER BY k.ord) AS child_columns,
             np.nspname AS parent_schema, parent.relname AS parent_table,
@@ -80,8 +83,12 @@ export async function listForeignKeys(schema: string): Promise<ForeignKey[]> {
      GROUP BY nc.nspname, child.relname, np.nspname, parent.relname, con.oid, con.confdeltype
      ORDER BY nc.nspname, child.relname, con.oid`,
     [schema],
-  );
-  return rows.map((r: any) => ({
+  )) as unknown as {
+    child_schema: string; child_table: string; child_columns: string[];
+    parent_schema: string; parent_table: string; parent_columns: string[];
+    on_delete: string;
+  }[];
+  return rows.map((r) => ({
     childSchema: r.child_schema, childTable: r.child_table, childColumns: r.child_columns,
     parentSchema: r.parent_schema, parentTable: r.parent_table, parentColumns: r.parent_columns,
     onDelete: ON_DELETE[r.on_delete] ?? "NO ACTION",

@@ -21,7 +21,7 @@ export async function previewWrite(schema: string, statement: string): Promise<S
   let affected = 0;
   try {
     await withTransaction(schema, async (tx) => {
-      const res: any = await tx.unsafe(statement);
+      const res = (await tx.unsafe(statement)) as unknown as { count?: number } & unknown[];
       affected = typeof res?.count === "number" ? res.count : Array.isArray(res) ? res.length : 0;
       throw ROLLBACK; // force rollback — preview only
     });
@@ -35,7 +35,7 @@ export async function applyWrite(schema: string, statement: string): Promise<Sql
   const actor = await currentActor();
   await ensureAuditTable();
   return withTransaction(schema, async (tx) => {
-    const res: any = await tx.unsafe(statement);
+    const res = (await tx.unsafe(statement)) as unknown as { count?: number } & unknown[];
     const affected = typeof res?.count === "number" ? res.count : Array.isArray(res) ? res.length : 0;
     await writeAudit(tx, { actor, schemaName: schema, tableName: null, operation: "RAW_SQL", pk: null, oldValues: null, newValues: null, statement });
     return { kind: "write-applied", affected };

@@ -20,6 +20,7 @@ export function SqlConsole({ schema }: { schema: string }) {
   }
 
   const isWritePreview = result?.kind === "write-preview";
+  const affected = result && "affected" in result ? result.affected : 0;
   return (
     <div className="space-y-3">
       <CodeMirror value={text} height="200px" extensions={[sqlLang()]} onChange={setText} />
@@ -27,7 +28,7 @@ export function SqlConsole({ schema }: { schema: string }) {
         <button disabled={busy} onClick={() => run(runSql)} className="rounded bg-black px-3 py-1.5 text-white">Run</button>
         {isWritePreview && (
           <button disabled={busy} onClick={() => run(applySql)} className="rounded bg-red-600 px-3 py-1.5 text-white">
-            Commit ({(result as any).affected} rows)
+            Commit ({affected} rows)
           </button>
         )}
       </div>
@@ -43,8 +44,8 @@ export function SqlConsole({ schema }: { schema: string }) {
           </tbody></table>
         </div>
       )}
-      {isWritePreview && <p className="rounded bg-amber-100 p-2 text-sm">Preview only — {(result as any).affected} row(s) would change. Nothing committed yet. Press Commit to apply.</p>}
-      {result?.kind === "write-applied" && <p className="rounded bg-green-100 p-2 text-sm">Applied — {(result as any).affected} row(s) changed and audited.</p>}
+      {isWritePreview && <p className="rounded bg-amber-100 p-2 text-sm">Preview only — {affected} row(s) would change. Nothing committed yet. Press Commit to apply.</p>}
+      {result?.kind === "write-applied" && <p className="rounded bg-green-100 p-2 text-sm">Applied — {affected} row(s) changed and audited.</p>}
     </div>
   );
 }

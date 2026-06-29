@@ -70,7 +70,7 @@ export async function computeBlastRadiusMany(schema: string, table: string, pks:
         const selectCols = f.parentColumns.map(ident).join(", ");
         const refRows = await getSql().unsafe(
           `SELECT ${selectCols} FROM ${qualified(node.schema, node.table)} WHERE ${pkClause} LIMIT 1`,
-          pkArgs as any[],
+          pkArgs as (string | number | boolean | null)[],
         ) as Record<string, unknown>[];
         if (refRows.length === 0) continue; // parent row doesn't exist, skip
         refValues = f.parentColumns.map((pc) => refRows[0][pc]);
@@ -78,7 +78,7 @@ export async function computeBlastRadiusMany(schema: string, table: string, pks:
       const args = refValues;
       const selectPk = childPk.map(ident).join(", ");
       const found = await getSql().unsafe(
-        `SELECT ${selectPk} FROM ${qualified(f.childSchema, f.childTable)} WHERE ${whereParts.join(" AND ")}`, args as any[],
+        `SELECT ${selectPk} FROM ${qualified(f.childSchema, f.childTable)} WHERE ${whereParts.join(" AND ")}`, args as (string | number | boolean | null)[],
       ) as Record<string, unknown>[];
       for (const r of found) {
         const cpk = Object.fromEntries(childPk.map((c) => [c, r[c]]));
@@ -147,8 +147,8 @@ async function deleteRadius(
         const keys = Object.keys(r.pk);
         const clause = keys.map((k, i) => `${ident(k)} = $${i + 1}`).join(" AND ");
         const args = keys.map((k) => r.pk[k]);
-        const oldRows = await tx.unsafe(`SELECT * FROM ${qualified(t.schema, t.table)} WHERE ${clause}`, args as any[]);
-        await tx.unsafe(`DELETE FROM ${qualified(t.schema, t.table)} WHERE ${clause}`, args as any[]);
+        const oldRows = await tx.unsafe(`SELECT * FROM ${qualified(t.schema, t.table)} WHERE ${clause}`, args as (string | number | boolean | null)[]);
+        await tx.unsafe(`DELETE FROM ${qualified(t.schema, t.table)} WHERE ${clause}`, args as (string | number | boolean | null)[]);
         await writeAudit(tx, { actor, schemaName: t.schema, tableName: t.table, operation: "CASCADE_DELETE",
           pk: r.pk, oldValues: oldRows[0] ?? null, newValues: null, statement: `DELETE FROM ${qualified(t.schema, t.table)}` });
         deleted += 1;

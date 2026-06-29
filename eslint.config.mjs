@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Gitignored scratch dir (remember plugin) — not repo code.
+    ".remember/**",
   ]),
 ]);
 

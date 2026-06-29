@@ -20,8 +20,8 @@ export async function readRows(
   const orderCols = shape.primaryKey.length ? shape.primaryKey : null;
 
   if (!orderCols) {
-    const rows = await getSql().unsafe(`SELECT * FROM ${rel} ORDER BY ctid LIMIT $1`, [limit]);
-    return { columns: shape.columns, primaryKey: [], rows: rows as any, nextCursor: null };
+    const rows = (await getSql().unsafe(`SELECT * FROM ${rel} ORDER BY ctid LIMIT $1`, [limit])) as unknown as Record<string, unknown>[];
+    return { columns: shape.columns, primaryKey: [], rows, nextCursor: null };
   }
 
   const orderBy = orderCols.map((c) => `${ident(c)} ASC`).join(", ");
