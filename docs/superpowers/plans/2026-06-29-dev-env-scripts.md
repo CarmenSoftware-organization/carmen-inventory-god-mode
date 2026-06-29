@@ -167,4 +167,4 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 - `playwright.config.ts:22` runs `bun run dev`; because `dev` now aliases `dev:local` (still `.env.local`), Playwright behavior is unchanged — no edit needed there.
 - Do NOT change `.gitignore`; `.env*` is already ignored, so `.env.prod` stays uncommitted.
-- Keep `.env.prod` key-complete with `.env.local`. A key present in `.env.local` but missing from `.env.prod` would be absent from `process.env` under `dev:prod`, and Next (NODE_ENV=development) would read it from `.env.local` on disk as a fallback — silently leaking a local value into a prod session.
+- Keep `.env.prod` key-complete with `.env.local`. A key present in `.env.local` but missing from `.env.prod` would be absent from `process.env` under `dev:prod`, and Next (NODE_ENV=development) would read it from `.env.local` (and the bare `.env`) on disk as a fallback — silently leaking a local value into a prod session.

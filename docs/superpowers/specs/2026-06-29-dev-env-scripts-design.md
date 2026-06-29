@@ -76,9 +76,10 @@ callers continue to work:
 
 Keep `.env.prod` key-complete with `.env.local`. If a key exists in `.env.local` but
 not `.env.prod`, then under `dev:prod` that key would be absent from `process.env`, and
-Next (running with `NODE_ENV=development`) would still read `.env.local` from disk as a
-fallback for it — silently pulling a local value into a prod session. Today the key sets
-match, so this is a guardrail for future edits, not a current bug.
+Next (running with `NODE_ENV=development`) would still read `.env.local` (and the bare
+`.env`) from disk as a fallback for it — silently pulling a local value into a prod
+session. Today all of `.env`, `.env.local`, and `.env.prod` have identical key sets, so
+this is a guardrail for future edits, not a current bug.
 
 ## Out of scope
 
