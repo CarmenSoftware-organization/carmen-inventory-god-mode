@@ -19,9 +19,7 @@ async function login(page: Page): Promise<void> {
   // If the gateway tab is active (BACKEND_API_BASE_URL set), switch to the
   // shared-secret tab so input[name="actor"] / input[name="secret"] are visible.
   const sharedSecretTab = page.getByRole("button", { name: /Shared secret/i });
-  if (await sharedSecretTab.isVisible()) {
-    await sharedSecretTab.click();
-  }
+  await sharedSecretTab.click({ timeout: 3_000 }).catch(() => { /* gateway disabled: no shared-secret tab, already on the secret form */ });
   await page.fill('input[name="actor"]', "e2e");
   await page.fill('input[name="secret"]', process.env.GOD_MODE_PASSWORD!);
   await page.click('button[type="submit"]');
