@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3305",
+    "dev": "bun run dev:local",
+    "dev:local": "bun --env-file=.env.local next dev -p 3305",
+    "dev:prod": "bun --env-file=.env.prod next dev -p 3305",
     "build": "next build",
     "start": "next start -p 3305",
     "lint": "eslint",
