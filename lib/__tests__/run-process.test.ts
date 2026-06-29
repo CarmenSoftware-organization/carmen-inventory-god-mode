@@ -38,3 +38,15 @@ test("flushes a trailing line with no newline", async () => {
   });
   expect(lines).toContain("no-newline");
 });
+
+test("strips carriage returns from lines", async () => {
+  const lines: string[] = [];
+  await runProcess({
+    command: process.execPath,
+    args: ["-e", "process.stdout.write('line1\\r\\nline2\\r\\n')"],
+    cwd: process.cwd(),
+    env: process.env,
+    onLine: (line) => lines.push(line),
+  });
+  expect(lines).toEqual(["line1", "line2"]);
+});

@@ -36,6 +36,8 @@ export function runProcess(opts: {
     child.stdout.on("data", (c: string) => out.push(c));
     child.stderr.on("data", (c: string) => err.push(c));
     child.on("error", reject);
+    child.stdout.on("error", reject);
+    child.stderr.on("error", reject);
     child.on("close", (code) => { out.flush(); err.flush(); resolve({ code: code ?? 0 }); });
   });
 }
