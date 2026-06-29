@@ -9,6 +9,7 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
         <Link href="/clusters" className="text-sm text-gray-600">Clusters</Link>
         <Link href="/audit" className="text-sm text-gray-600">Audit log</Link>
         <Link href="/migrations" className="text-sm text-gray-600">Migrations</Link>
+        <Link href="/platform-migrations" className="text-sm text-gray-600">Platform migrations</Link>
         <form action={logout} className="ml-auto">
           <button className="text-sm text-gray-600">Log out</button>
         </form>
