@@ -8,7 +8,7 @@ permanent — there is no undo.** The audit log is the only recovery record.
 2. `bun install`
 3. `bun run dev` (uses `.env.local`). Use `bun run dev:local` / `bun run dev:prod` to pick `.env.local` vs `.env.prod` explicitly. The server port comes from `PORT` in the chosen env file (3305 by default).
 
-The `CARMEN_SYSTEM.tb_god_mode_audit` table is created automatically on the first platform-migration run (the `/platform-migrations` page).
+The `CARMEN_SYSTEM.tb_god_mode_audit` table is created automatically on the first audited operation — any delete, edit, raw-SQL write, or platform migration self-ensures it.
 
 ## Tests
 - `bun run test` — unit + integration (integration uses embedded-postgres; no Docker needed). (Use `bun run test`, NOT `bun test` — the latter invokes Bun's built-in runner and cannot run our Vitest suite.)

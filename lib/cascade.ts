@@ -3,7 +3,7 @@ import { listForeignKeys, describeTable, type ForeignKey } from "@/lib/introspec
 import { orderTablesForDeletion, type TableRef } from "@/lib/topo";
 import { ident, qualified } from "@/lib/sql-guard";
 import { env } from "@/lib/env";
-import { writeAudit } from "@/lib/audit";
+import { writeAudit, ensureAuditTable } from "@/lib/audit";
 import { currentActor, whereFromPk } from "@/lib/write";
 import type { OnProgress } from "@/lib/progress";
 
@@ -135,6 +135,7 @@ async function deleteRadius(
   const dropSchemas = opts.dropTenantSchemas ?? [];
   onProgress?.({ type: "total", total: radius.rows.length + dropSchemas.length });
 
+  await ensureAuditTable();
   return withTransaction(null, async (tx) => {
     let deleted = 0;
     for (const t of order) {

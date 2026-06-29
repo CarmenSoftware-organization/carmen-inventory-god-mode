@@ -1,6 +1,6 @@
 import { withTransaction } from "@/lib/db";
 import { ident, qualified } from "@/lib/sql-guard";
-import { writeAudit, type Operation } from "@/lib/audit";
+import { writeAudit, ensureAuditTable, type Operation } from "@/lib/audit";
 import { currentActor, whereFromPk } from "@/lib/write";
 
 type Opts = {
@@ -21,6 +21,7 @@ async function setDeletedAt(
   const byCol = opts.deletedByColumn;
   const deletedAtSql = mode === "delete" ? "now()" : "NULL";
   const actor = await currentActor();
+  await ensureAuditTable();
   return withTransaction(null, async (tx) => {
     let affected = 0;
     for (const pk of pks) {
