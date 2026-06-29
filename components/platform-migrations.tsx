@@ -48,7 +48,7 @@ export function PlatformMigrations({ target, catalog, buCodes, tenantFiles, sche
   };
 
   const select = (id: string) => {
-    setSelectedId(id); setBu(""); setOnly(""); setConfirm(""); setDestroyChecked(false);
+    setSelectedId(id); setBu(""); setOnly(""); setConfirm(""); setDestroyChecked(false); setCreateChecked(false);
   };
 
   const writeOp = !!op && op.writes && !op.readonly;
