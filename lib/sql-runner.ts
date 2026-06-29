@@ -1,5 +1,5 @@
 import { withTransaction } from "@/lib/db";
-import { writeAudit } from "@/lib/audit";
+import { writeAudit, ensureAuditTable } from "@/lib/audit";
 import { currentActor } from "@/lib/write";
 
 export type SqlResult =
@@ -33,6 +33,7 @@ export async function previewWrite(schema: string, statement: string): Promise<S
 
 export async function applyWrite(schema: string, statement: string): Promise<SqlResult> {
   const actor = await currentActor();
+  await ensureAuditTable();
   return withTransaction(schema, async (tx) => {
     const res: any = await tx.unsafe(statement);
     const affected = typeof res?.count === "number" ? res.count : Array.isArray(res) ? res.length : 0;
