@@ -26,14 +26,14 @@ test("no Delete-selected control until a row is checked", async () => {
 test("checking a row reveals Delete N selected with the correct href", async () => {
   const { RowGrid } = await import("@/components/row-grid");
   render(<RowGrid schema="app" table="t" page={page} />);
-  fireEvent.click(screen.getByLabelText("select row 0"));
-  const link = screen.getByText("Delete 1 selected").closest("a")!;
+  fireEvent.click(screen.getByLabelText("Select row 1"));
+  const link = screen.getByText("Delete 1").closest("a")!;
   expect(link).toHaveAttribute("href", `/app/t/delete-batch?pks=${encodeURIComponent(JSON.stringify([{ id: 1 }]))}`);
 });
 
 test("select-all checks every row on the page", async () => {
   const { RowGrid } = await import("@/components/row-grid");
   render(<RowGrid schema="app" table="t" page={page} />);
-  fireEvent.click(screen.getByLabelText("select all"));
-  expect(screen.getByText("Delete 2 selected")).toBeInTheDocument();
+  fireEvent.click(screen.getByLabelText("Select all rows"));
+  expect(screen.getByText("Delete 2")).toBeInTheDocument();
 });

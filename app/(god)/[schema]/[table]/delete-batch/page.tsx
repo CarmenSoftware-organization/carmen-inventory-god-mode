@@ -4,6 +4,7 @@ import { computeBlastRadiusMany } from "@/lib/cascade";
 import { requiredPhrase, radiusTouchesBusinessUnits } from "@/lib/delete-confirm";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { SchemaBanner } from "@/components/schema-banner";
+import { Alert } from "@/components/ui/alert";
 
 export const dynamic = "force-dynamic";
 
@@ -18,15 +19,20 @@ export default async function DeleteBatchPage({
   const radius = await computeBlastRadiusMany(schema, table, pks);
   const orphanWarning = radiusTouchesBusinessUnits(radius.byTable, env().systemSchemaName);
   return (
-    <div>
+    <div className="space-y-4">
       <SchemaBanner schema={schema} />
-      <h1 className="my-3 text-lg font-semibold font-mono">Delete {pks.length} selected row(s) from {schema}.{table}</h1>
+      <h1 className="text-base font-semibold tracking-tight">
+        Delete {pks.length} selected row(s) from <span className="font-mono">{schema}.{table}</span>
+      </h1>
       {orphanWarning && (
-        <p className="mb-3 rounded border border-amber-400 bg-amber-50 p-2 text-sm text-amber-900">
-          ⚠ This cascade deletes <strong>business-unit registry rows</strong>, but their tenant Postgres schemas are not
-          linked by a foreign key and will <strong>not</strong> be dropped — they will be left orphaned. To drop a tenant
-          schema, delete that business unit individually from the registry.
-        </p>
+        <Alert variant="warning" title="Tenant schemas will be left orphaned.">
+          <p>
+            This cascade deletes <strong>business-unit registry rows</strong>, but their tenant Postgres
+            schemas are not linked by a foreign key and will <strong>not</strong> be dropped. They will be
+            left orphaned. To drop a tenant schema, delete that business unit individually from the
+            registry.
+          </p>
+        </Alert>
       )}
       <ConfirmDelete schema={schema} table={table} pkJson={JSON.stringify(pks)} radius={radius}
         isBusinessUnit={false} tenantSchema={null}

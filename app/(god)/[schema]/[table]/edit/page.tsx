@@ -23,9 +23,11 @@ export default async function EditPage({
   if (!rows[0]) notFound();
   const action = submitUpdate.bind(null, schema, table, JSON.stringify(pk));
   return (
-    <div>
+    <div className="space-y-4">
       <SchemaBanner schema={schema} />
-      <h1 className="my-3 text-lg font-semibold font-mono">Edit {schema}.{table}</h1>
+      <h1 className="text-base font-semibold tracking-tight">
+        Edit <span className="font-mono">{schema}.{table}</span>
+      </h1>
       <RowForm columns={shape.columns} initial={rows[0] as Record<string, unknown>} action={action} submitLabel="Save changes" />
     </div>
   );

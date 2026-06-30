@@ -9,7 +9,7 @@ export default async function ClustersPage() {
   const clusters = await listClusters();
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Clusters</h1>
+      <h1 className="text-base font-semibold tracking-tight">Clusters</h1>
       <ClustersTable
         clusters={clusters}
         system={env().systemSchemaName}
