@@ -10,9 +10,11 @@ export default async function InsertPage({ params }: { params: Promise<{ schema:
   const shape = await describeTable(schema, table);
   const action = submitInsert.bind(null, schema, table);
   return (
-    <div>
+    <div className="space-y-4">
       <SchemaBanner schema={schema} />
-      <h1 className="my-3 text-lg font-semibold font-mono">Insert into {schema}.{table}</h1>
+      <h1 className="text-base font-semibold tracking-tight">
+        Insert into <span className="font-mono">{schema}.{table}</span>
+      </h1>
       <RowForm columns={shape.columns} action={action} submitLabel="Insert" />
     </div>
   );

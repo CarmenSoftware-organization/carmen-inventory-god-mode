@@ -31,8 +31,8 @@ test("no Delete-selected control until a row is checked", async () => {
 test("checking a row reveals Delete N selected with the delete-batch href", async () => {
   const { BusinessUnitsTable } = await import("@/components/business-units-table");
   render(<BusinessUnitsTable bus={bus} system="CARMEN_SYSTEM" />);
-  fireEvent.click(screen.getByLabelText("select row 0"));
-  const link = screen.getByText("Delete 1 selected").closest("a")!;
+  fireEvent.click(screen.getByLabelText("Select row 1"));
+  const link = screen.getByText("Delete 1").closest("a")!;
   expect(link).toHaveAttribute(
     "href",
     `/CARMEN_SYSTEM/tb_business_unit/delete-batch?pks=${encodeURIComponent(JSON.stringify([{ id: "11" }]))}`,
@@ -42,15 +42,15 @@ test("checking a row reveals Delete N selected with the delete-batch href", asyn
 test("select-all checks every business unit", async () => {
   const { BusinessUnitsTable } = await import("@/components/business-units-table");
   render(<BusinessUnitsTable bus={bus} system="CARMEN_SYSTEM" />);
-  fireEvent.click(screen.getByLabelText("select all"));
-  expect(screen.getByText("Delete 2 selected")).toBeInTheDocument();
+  fireEvent.click(screen.getByLabelText("Select all"));
+  expect(screen.getByText("Delete 2")).toBeInTheDocument();
 });
 
 test("per-row delete and open links preserved", async () => {
   const { BusinessUnitsTable } = await import("@/components/business-units-table");
   render(<BusinessUnitsTable bus={bus} system="CARMEN_SYSTEM" />);
-  expect(screen.getByText("open →").closest("a")).toHaveAttribute("href", "/tenant_a/tables");
-  const del = screen.getAllByText("delete")[0].closest("a")!;
+  expect(screen.getByText("Open").closest("a")).toHaveAttribute("href", "/tenant_a/tables");
+  const del = screen.getAllByText("Delete")[0].closest("a")!;
   expect(del).toHaveAttribute(
     "href",
     `/CARMEN_SYSTEM/tb_business_unit/delete?pk=${encodeURIComponent(JSON.stringify({ id: "11" }))}`,

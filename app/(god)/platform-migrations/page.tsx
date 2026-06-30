@@ -13,13 +13,15 @@ export default async function PlatformMigrationsPage() {
   const buCodes = bus.filter((b) => b.isActive).map((b) => b.code);
   const target = targetDbInfo();
   return (
-    <div>
-      <h1 className="my-3 text-lg font-semibold">Platform migrations</h1>
-      <p className="mb-3 text-sm text-gray-600">
-        Runs migration scripts of <code>@repo/prisma-shared-schema-platform</code> against the database
-        this instance manages, by spawning the package&apos;s own commands. Pick the target schema below.
-        Output streams live.
-      </p>
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <h1 className="text-base font-semibold tracking-tight">Platform migrations</h1>
+        <p className="max-w-2xl text-sm text-foreground-muted">
+          Runs migration scripts of <code className="font-mono">@repo/prisma-shared-schema-platform</code>{" "}
+          against the database this instance manages, by spawning the package&apos;s own commands. Pick
+          the target schema below. Output streams live.
+        </p>
+      </div>
       <PlatformMigrations
         target={target} catalog={CATALOG} buCodes={buCodes} tenantFiles={tenantFiles}
         schemas={schemas} defaultSchema={target.schema}

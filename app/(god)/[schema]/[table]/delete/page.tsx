@@ -21,9 +21,11 @@ export default async function DeletePage({
   const orphanSchemas = isCluster ? await resolveTenantSchemasForCluster(String(pk.id)) : undefined;
   const radius = await computeBlastRadius(schema, table, pk);
   return (
-    <div>
+    <div className="space-y-4">
       <SchemaBanner schema={schema} />
-      <h1 className="my-3 text-lg font-semibold font-mono">Delete from {schema}.{table}</h1>
+      <h1 className="text-base font-semibold tracking-tight">
+        Delete from <span className="font-mono">{schema}.{table}</span>
+      </h1>
       <ConfirmDelete schema={schema} table={table} pkJson={JSON.stringify(pk)} radius={radius}
         isBusinessUnit={isBusinessUnit} tenantSchema={tenantSchema}
         orphanSchemas={orphanSchemas}

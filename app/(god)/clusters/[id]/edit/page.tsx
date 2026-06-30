@@ -21,8 +21,8 @@ export default async function EditClusterPage({ params }: { params: Promise<{ id
   if (!rows[0]) notFound();
   const action = submitClusterUpdate.bind(null, JSON.stringify(pk));
   return (
-    <div>
-      <h1 className="my-3 text-lg font-semibold">Edit cluster</h1>
+    <div className="space-y-4">
+      <h1 className="text-base font-semibold tracking-tight">Edit cluster</h1>
       <RowForm columns={editable} initial={rows[0] as Record<string, unknown>} action={action} submitLabel="Save changes" />
     </div>
   );

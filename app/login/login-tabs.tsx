@@ -1,6 +1,9 @@
 "use client";
 import { useActionState, useState } from "react";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { login, gatewayLogin } from "@/server/auth";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 type Tab = "gateway" | "secret";
 
@@ -12,43 +15,82 @@ export function LoginTabs({ gatewayEnabled }: { gatewayEnabled: boolean }) {
   return (
     <div className="space-y-4">
       {gatewayEnabled && (
-        <div className="flex gap-4 border-b text-sm">
-          <button
-            type="button"
-            onClick={() => setTab("gateway")}
-            className={tab === "gateway" ? "border-b-2 border-black pb-1 font-medium" : "pb-1 text-gray-500"}
-          >
-            Gateway login
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("secret")}
-            className={tab === "secret" ? "border-b-2 border-black pb-1 font-medium" : "pb-1 text-gray-500"}
-          >
-            Shared secret
-          </button>
+        <div role="tablist" className="flex items-center gap-1 border-b border-border">
+          {(["gateway", "secret"] as const).map((t) => {
+            const active = tab === t;
+            const label = t === "gateway" ? "Gateway login" : "Shared secret";
+            return (
+              <button
+                key={t}
+                role="tab"
+                type="button"
+                aria-selected={active}
+                onClick={() => setTab(t)}
+                className={`relative px-3 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "text-foreground"
+                    : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                {label}
+                {active && (
+                  <span className="absolute inset-x-0 -bottom-px h-0.5 bg-accent" />
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
 
       {gatewayEnabled && tab === "gateway" && (
         <form action={gwAction} className="space-y-3">
-          <input name="username" placeholder="Email or username" required className="w-full rounded border p-2" />
-          <input name="password" type="password" placeholder="Password" required className="w-full rounded border p-2" />
-          {gwState.error && <p role="alert" className="text-sm text-red-600">{gwState.error}</p>}
-          <button type="submit" disabled={gwPending} className="w-full rounded bg-black p-2 text-white disabled:opacity-50">
-            {gwPending ? "Signing in…" : "Enter"}
-          </button>
+          <div className="space-y-1.5">
+            <label htmlFor="username" className="block text-sm font-medium">
+              Email or username
+            </label>
+            <Input id="username" name="username" placeholder="you@example.com" required />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="password" className="block text-sm font-medium">
+              Password
+            </label>
+            <Input id="password" name="password" type="password" required />
+          </div>
+          {gwState.error && (
+            <p role="alert" className="text-sm font-medium text-danger">
+              {gwState.error}
+            </p>
+          )}
+          <Button type="submit" disabled={gwPending} pending={gwPending} className="w-full">
+            {gwPending ? "Signing in..." : "Enter"}
+            {!gwPending && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+          </Button>
         </form>
       )}
 
       {tab === "secret" && (
         <form action={secAction} className="space-y-3">
-          <input name="actor" placeholder="Your name (for audit)" className="w-full rounded border p-2" />
-          <input name="secret" type="password" placeholder="Shared secret" required className="w-full rounded border p-2" />
-          {secState.error && <p role="alert" className="text-sm text-red-600">{secState.error}</p>}
-          <button type="submit" disabled={secPending} className="w-full rounded bg-black p-2 text-white disabled:opacity-50">
-            {secPending ? "Entering…" : "Enter"}
-          </button>
+          <div className="space-y-1.5">
+            <label htmlFor="actor" className="block text-sm font-medium">
+              Your name (for audit)
+            </label>
+            <Input id="actor" name="actor" placeholder="Jane Operator" />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="secret" className="block text-sm font-medium">
+              Shared secret
+            </label>
+            <Input id="secret" name="secret" type="password" required />
+          </div>
+          {secState.error && (
+            <p role="alert" className="text-sm font-medium text-danger">
+              {secState.error}
+            </p>
+          )}
+          <Button type="submit" disabled={secPending} pending={secPending} className="w-full">
+            {secPending ? "Entering..." : "Enter"}
+            {!secPending && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+          </Button>
         </form>
       )}
     </div>

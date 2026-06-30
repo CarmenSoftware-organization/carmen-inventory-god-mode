@@ -1,9 +1,14 @@
 "use client";
 import { useMemo, useState } from "react";
+import { Warning, XCircle } from "@phosphor-icons/react/dist/ssr";
 import { useOperationStream } from "@/components/use-operation-stream";
 import { OperationProgress } from "@/components/operation-progress";
 import { OperationLog } from "@/components/operation-log";
 import { canRun, validateSchemaName, type CatalogOp, type OpGroup } from "@/lib/platform-migrations";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/cn";
 
 export type TargetDb = { masked: string; database: string; schema: string };
 
@@ -11,12 +16,23 @@ const GROUPS: { key: OpGroup; title: string }[] = [
   { key: "prisma", title: "Prisma schema migrations" },
   { key: "tenant", title: "Tenant view migrations (all active BU schemas)" },
   { key: "seed", title: "Seed scripts" },
-  { key: "danger", title: "Danger zone — destructive resets" },
+  { key: "danger", title: "Danger zone: destructive resets" },
 ];
 
-export function PlatformMigrations({ target, catalog, buCodes, tenantFiles, schemas, defaultSchema }: {
-  target: TargetDb; catalog: CatalogOp[]; buCodes: string[]; tenantFiles: string[];
-  schemas: string[]; defaultSchema: string;
+export function PlatformMigrations({
+  target,
+  catalog,
+  buCodes,
+  tenantFiles,
+  schemas,
+  defaultSchema,
+}: {
+  target: TargetDb;
+  catalog: CatalogOp[];
+  buCodes: string[];
+  tenantFiles: string[];
+  schemas: string[];
+  defaultSchema: string;
 }) {
   const { state, start } = useOperationStream();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -27,12 +43,23 @@ export function PlatformMigrations({ target, catalog, buCodes, tenantFiles, sche
   const [destroyChecked, setDestroyChecked] = useState(false);
   const [createChecked, setCreateChecked] = useState(false);
 
-  const op = useMemo(() => catalog.find((o) => o.id === selectedId) ?? null, [catalog, selectedId]);
+  const op = useMemo(
+    () => catalog.find((o) => o.id === selectedId) ?? null,
+    [catalog, selectedId],
+  );
   const schemaStatus = validateSchemaName(schema, schemas);
   const isNewSchema = schemaStatus === "new";
   const running = state.phase === "running";
-  const enabled = !!op && !running &&
-    canRun(op, { confirm, schema, knownSchemas: schemas, destroyChecked, createChecked });
+  const enabled =
+    !!op &&
+    !running &&
+    canRun(op, {
+      confirm,
+      schema,
+      knownSchemas: schemas,
+      destroyChecked,
+      createChecked,
+    });
 
   const run = () => {
     if (!op) return;
@@ -48,44 +75,96 @@ export function PlatformMigrations({ target, catalog, buCodes, tenantFiles, sche
   };
 
   const select = (id: string) => {
-    setSelectedId(id); setBu(""); setOnly(""); setConfirm(""); setDestroyChecked(false); setCreateChecked(false);
+    setSelectedId(id);
+    setBu("");
+    setOnly("");
+    setConfirm("");
+    setDestroyChecked(false);
+    setCreateChecked(false);
   };
 
   const writeOp = !!op && op.writes && !op.readonly;
 
   return (
     <div className="space-y-4">
-      <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm">
-        <span className="font-semibold">Target:</span> <code>{target.masked}</code>{" "}
-        <span className="text-gray-600">(schema <code>{schema || "—"}</code>{isNewSchema ? ", NEW" : ""})</span>
+      {/* Target info */}
+      <div className="flex items-center gap-2 rounded-md border border-warning-border bg-warning-subtle px-3 py-2 text-sm text-warning-subtle-foreground">
+        <Warning className="h-4 w-4 shrink-0" aria-hidden="true" weight="fill" />
+        <span>
+          Target:{" "}
+          <code className="font-mono">{target.masked}</code>{" "}
+          <span className="text-foreground-subtle">
+            (schema{" "}
+            <code className="font-mono">{schema || "\u2014"}</code>
+            {isNewSchema && (
+              <span className="font-semibold">, NEW</span>
+            )}
+          </span>
+        </span>
       </div>
 
-      <label className="block text-sm">
+      {/* Schema input */}
+      <label className="block text-sm font-medium">
         Target schema
-        <input
-          list="schemas" aria-label="schema" className="ml-2 rounded border px-2 py-1"
-          value={schema} placeholder="e.g. CARMEN_SYSTEM"
-          onChange={(e) => { setSchema(e.target.value); setCreateChecked(false); }}
+        <Input
+          list="schemas"
+          aria-label="schema"
+          className="mt-1 ml-0 max-w-xs"
+          value={schema}
+          placeholder="e.g. CARMEN_SYSTEM"
+          onChange={(e) => {
+            setSchema(e.target.value);
+            setCreateChecked(false);
+          }}
         />
         <datalist id="schemas">
-          {schemas.map((s) => <option key={s} value={s} />)}
+          {schemas.map((s) => (
+            <option key={s} value={s} />
+          ))}
         </datalist>
         {schemaStatus === "invalid" && schema.length > 0 && (
-          <span className="ml-2 text-red-700">invalid schema name</span>
+          <p className="mt-1 text-xs font-medium text-danger">
+            Invalid schema name
+          </p>
         )}
       </label>
 
+      {/* Operation groups */}
       {GROUPS.map((g) => {
         const ops = catalog.filter((o) => o.group === g.key);
         if (!ops.length) return null;
         const danger = g.key === "danger";
         return (
-          <fieldset key={g.key} className={`rounded border p-3 ${danger ? "border-red-400 bg-red-50" : ""}`}>
-            <legend className={`px-1 text-sm font-semibold ${danger ? "text-red-700" : ""}`}>{g.title}</legend>
-            <div className="space-y-1">
+          <fieldset
+            key={g.key}
+            className={cn(
+              "rounded-lg border p-3",
+              danger
+                ? "border-danger-border bg-danger-subtle"
+                : "border-border bg-surface",
+            )}
+          >
+            <legend
+              className={cn(
+                "px-2 text-sm font-semibold",
+                danger ? "text-danger-subtle-foreground" : "text-foreground",
+              )}
+            >
+              {g.title}
+            </legend>
+            <div className="space-y-1.5">
               {ops.map((o) => (
-                <label key={o.id} className="flex items-center gap-2 text-sm">
-                  <input type="radio" name="op" checked={selectedId === o.id} onChange={() => select(o.id)} />
+                <label
+                  key={o.id}
+                  className="flex cursor-pointer items-center gap-2 text-sm"
+                >
+                  <input
+                    type="radio"
+                    name="op"
+                    checked={selectedId === o.id}
+                    onChange={() => select(o.id)}
+                    className="accent-accent"
+                  />
                   <span>{o.label}</span>
                 </label>
               ))}
@@ -94,59 +173,98 @@ export function PlatformMigrations({ target, catalog, buCodes, tenantFiles, sche
         );
       })}
 
+      {/* Business unit select */}
       {op?.acceptsBu && (
-        <label className="block text-sm">
+        <label className="block text-sm font-medium">
           Business unit (optional)
-          <select className="ml-2 rounded border px-2 py-1" value={bu} onChange={(e) => setBu(e.target.value)}>
+          <select
+            className="mt-1 max-w-xs rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground"
+            value={bu}
+            onChange={(e) => setBu(e.target.value)}
+          >
             <option value="">all active</option>
-            {buCodes.map((c) => <option key={c} value={c}>{c}</option>)}
+            {buCodes.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
         </label>
       )}
 
+      {/* File prefix filter */}
       {op?.acceptsOnly && (
-        <label className="block text-sm">
+        <label className="block text-sm font-medium">
           Only file prefix (optional)
-          <input
-            list="tenant-files" className="ml-2 rounded border px-2 py-1"
-            value={only} onChange={(e) => setOnly(e.target.value)} placeholder="e.g. 001_v_operational"
+          <Input
+            list="tenant-files"
+            className="mt-1 max-w-xs"
+            value={only}
+            onChange={(e) => setOnly(e.target.value)}
+            placeholder="e.g. 001_v_operational"
           />
           <datalist id="tenant-files">
-            {tenantFiles.map((f) => <option key={f} value={f.replace(/\.up\.sql$/, "")} />)}
+            {tenantFiles.map((f) => (
+              <option key={f} value={f.replace(/\.up\.sql$/, "")} />
+            ))}
           </datalist>
         </label>
       )}
 
+      {/* Confirm phrase */}
       {writeOp && (
-        <label className="block text-sm">
-          Type the schema name <code>{schema}</code> to confirm
-          <input
-            aria-label="confirm" className="ml-2 rounded border px-2 py-1"
-            value={confirm} onChange={(e) => setConfirm(e.target.value)}
+        <label className="block text-sm font-medium">
+          Type the schema name{" "}
+          <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
+            {schema}
+          </code>{" "}
+          to confirm
+          <Input
+            aria-label="confirm"
+            className="mt-1 max-w-xs"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
           />
         </label>
       )}
 
+      {/* New schema checkbox */}
       {writeOp && isNewSchema && (
-        <label className="flex items-center gap-2 text-sm text-amber-800">
-          <input type="checkbox" checked={createChecked} onChange={(e) => setCreateChecked(e.target.checked)} />
-          Create new schema <code>{schema}</code>
+        <label className="flex items-center gap-3 rounded-md border border-warning-border bg-warning-subtle p-3 text-sm text-warning-subtle-foreground">
+          <Checkbox
+            checked={createChecked}
+            onChange={(e) => setCreateChecked(e.target.checked)}
+          />
+          <span>
+            Create new schema{" "}
+            <code className="font-mono">{schema}</code>
+          </span>
         </label>
       )}
 
+      {/* Destructive confirmation */}
       {op?.destructive && (
-        <label className="flex items-center gap-2 text-sm text-red-700">
-          <input type="checkbox" checked={destroyChecked} onChange={(e) => setDestroyChecked(e.target.checked)} />
-          I understand this destroys data
+        <label className="flex items-center gap-3 rounded-md border border-danger-border bg-danger-subtle p-3 text-sm text-danger-subtle-foreground">
+          <Checkbox
+            checked={destroyChecked}
+            onChange={(e) => setDestroyChecked(e.target.checked)}
+          />
+          <span>
+            <XCircle className="mr-1.5 inline h-4 w-4" aria-hidden="true" weight="fill" />
+            I understand this destroys data
+          </span>
         </label>
       )}
 
-      <button
-        onClick={run} disabled={!enabled}
-        className="rounded bg-black px-4 py-2 font-semibold text-white disabled:opacity-50"
+      {/* Run button */}
+      <Button
+        onClick={run}
+        disabled={!enabled}
+        pending={running}
+        variant={op?.destructive ? "danger" : "primary"}
       >
-        {running ? "Running…" : "Run"}
-      </button>
+        {running ? "Running..." : "Run"}
+      </Button>
 
       <OperationProgress state={state} />
       <OperationLog state={state} />
