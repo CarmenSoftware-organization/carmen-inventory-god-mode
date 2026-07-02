@@ -34,9 +34,10 @@ export function SealConfirm({
   const canSeal = armed && !disabled && !pending && !sealed;
 
   function begin() {
-    if (!canSeal || holding) return;
+    if (!canSeal || holding || timer.current) return;
     setHolding(true);
     timer.current = setTimeout(() => {
+      timer.current = null;
       setHolding(false);
       setSealed(true);
       onStamp();
@@ -52,6 +53,22 @@ export function SealConfirm({
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
+
+  // If the parent blocks the action mid-hold (e.g. blast radius truncates),
+  // abandon any pending stamp so the external block can't be outrun. Clearing
+  // the timer here is a ref/external cleanup (no setState); the hold's visual
+  // state is derived from the block below, so the fill snaps back too.
+  useEffect(() => {
+    if ((disabled || pending) && timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+  }, [disabled, pending]);
+
+  // A hold only counts while the action isn't externally blocked; deriving
+  // this (instead of resetting state in the effect) resets the fill on block
+  // without a cascading-render setState-in-effect.
+  const showHold = holding && !disabled && !pending;
 
   const face = sealed
     ? "Sealed"
@@ -84,9 +101,9 @@ export function SealConfirm({
         type="button"
         aria-label={label}
         aria-disabled={!canSeal}
-        aria-busy={pending || holding || undefined}
+        aria-busy={pending || showHold || undefined}
         data-armed={armed}
-        data-holding={holding}
+        data-holding={showHold}
         data-sealed={sealed}
         onMouseDown={begin}
         onMouseUp={cancel}
@@ -112,10 +129,10 @@ export function SealConfirm({
           aria-hidden="true"
           className={cn(
             "absolute inset-0 origin-left bg-seal",
-            holding || sealed ? "scale-x-100" : "scale-x-0",
+            showHold || sealed ? "scale-x-100" : "scale-x-0",
           )}
           style={{
-            transition: holding
+            transition: showHold
               ? `transform ${holdMs}ms linear`
               : "transform 140ms ease-out",
           }}
@@ -123,7 +140,7 @@ export function SealConfirm({
         <span
           className={cn(
             "relative font-display text-sm font-medium uppercase tracking-[0.12em]",
-            holding || sealed
+            showHold || sealed
               ? "text-danger-foreground"
               : canSeal
                 ? "text-seal"

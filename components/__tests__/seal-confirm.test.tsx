@@ -44,3 +44,25 @@ test("keyboard hold (Space) also stamps", async () => {
   fireEvent.keyDown(screen.getByRole("button", { name: /seal/i }), { key: " " });
   await waitFor(() => expect(onStamp).toHaveBeenCalledTimes(1));
 });
+
+test("disabling mid-hold cancels the stamp", async () => {
+  const { SealConfirm } = await import("@/components/seal-confirm");
+  const onStamp = vi.fn();
+  const { rerender } = render(<SealConfirm requiredPhrase="DELETE" onStamp={onStamp} holdMs={60} />);
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "DELETE" } });
+  fireEvent.mouseDown(screen.getByRole("button", { name: /seal/i }));
+  rerender(<SealConfirm requiredPhrase="DELETE" onStamp={onStamp} holdMs={60} disabled />);
+  await new Promise((r) => setTimeout(r, 140));
+  expect(onStamp).not.toHaveBeenCalled();
+});
+
+test("unmounting mid-hold fires nothing (timer cleared)", async () => {
+  const { SealConfirm } = await import("@/components/seal-confirm");
+  const onStamp = vi.fn();
+  const { unmount } = render(<SealConfirm requiredPhrase="DELETE" onStamp={onStamp} holdMs={60} />);
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "DELETE" } });
+  fireEvent.mouseDown(screen.getByRole("button", { name: /seal/i }));
+  unmount();
+  await new Promise((r) => setTimeout(r, 140));
+  expect(onStamp).not.toHaveBeenCalled();
+});
