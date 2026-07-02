@@ -12,7 +12,7 @@ export default async function SchemasPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Registry"
+        rubric="Registry"
         title="Schemas"
         lede="Pick a target schema to inspect its tables and rows, or manage business units."
       />

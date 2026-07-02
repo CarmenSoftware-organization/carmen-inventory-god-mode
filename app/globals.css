@@ -200,6 +200,23 @@
       translate: 0 1px;
     }
   }
+
+  /* Page-load motion: the folio settles into place. Reduced-motion-safe. */
+  @media (prefers-reduced-motion: no-preference) {
+    main {
+      animation: folio-in 260ms ease-out both;
+    }
+    @keyframes folio-in {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
 }
 
 /* ------------------------------------------------------------------ */
