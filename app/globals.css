@@ -171,6 +171,7 @@
 
   --color-seal: var(--seal);
   --color-seal-hover: var(--seal-hover);
+  --color-target-idle: var(--target-idle);
 
   --font-sans: var(--font-newsreader);
   --font-mono: var(--font-plex-mono);
