@@ -69,8 +69,8 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
           </form>
         </header>
 
-        {/* The ledger's running rule — draws once on load (Task 11 adds motion). */}
-        <div className={cn("rule-double", live && "bg-danger-subtle")} aria-hidden="true" />
+        {/* The ledger's running rule. */}
+        <div className="rule-double" aria-hidden="true" />
 
         {/* Mobile target row — the persistent "where is this pointed" reminder. */}
         <div
@@ -90,6 +90,7 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
           <span className={cn("rubric ml-auto shrink-0", live && "text-danger")}>
             {target.label}
           </span>
+          <span className="sr-only">{live ? "Live target — writes are permanent" : "Local target"}</span>
         </div>
       </div>
 

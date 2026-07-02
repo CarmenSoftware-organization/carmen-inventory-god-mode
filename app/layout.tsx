@@ -28,7 +28,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Carmen God Mode",
+  title: "Carmen · The Register",
   description: "Admin console for inspecting and surgically mutating Carmen inventory data.",
 };
 

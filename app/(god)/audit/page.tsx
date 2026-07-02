@@ -118,7 +118,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                 <Td>
                   <span className="inline-flex items-center gap-1.5">
                     {SEALED.has(e.operation) && (
-                      <span className="stamp-mark" aria-label="sealed" title="Sealed — irreversible">
+                      <span className="stamp-mark" role="img" aria-label="sealed" title="Sealed — irreversible">
                         ●
                       </span>
                     )}

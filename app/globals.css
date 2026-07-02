@@ -27,7 +27,7 @@
   --surface-muted: #e4e2da;
   --foreground: #1b2230; /* blue-black ink */
   --foreground-muted: #565e6e;
-  --foreground-subtle: #7a818e;
+  --foreground-subtle: #5f6674;
   --border: #cdcabf; /* hairline rule */
   --border-strong: #b4b0a3;
   --ring: #1b2230;
@@ -57,7 +57,7 @@
   --warning-subtle: #f5edd9;
   --warning-subtle-foreground: #7a521a;
   --warning-border: #e4d3a6;
-  --warning-strong: #b07a26;
+  --warning-strong: #bd8730;
 
   --success: #2f5d4e; /* bottle green — committed */
   --success-hover: #274e41;
@@ -81,7 +81,7 @@
   --surface-muted: #1c1a14;
   --foreground: #ece7da; /* warm parchment */
   --foreground-muted: #a29b89;
-  --foreground-subtle: #79725f;
+  --foreground-subtle: #928a78;
   --border: #332e22;
   --border-strong: #48412f;
   --ring: #ece7da;
@@ -93,10 +93,10 @@
   --link: #8fa9d8;
   --link-hover: #abbfe4;
 
-  --seal: #d6564a;
+  --seal: #df6559;
   --seal-hover: #e06b60;
 
-  --danger: #d6564a;
+  --danger: #df6559;
   --danger-hover: #e06b60;
   --danger-foreground: #181510;
   --danger-subtle: #2e1512;
@@ -182,7 +182,7 @@
   body {
     background: var(--background);
     color: var(--foreground);
-    /* Use the loaded Geist font, NOT Arial. Falls back through system fonts. */
+    /* Use the loaded Newsreader body font. Falls back through system serif. */
     font-family: var(--font-newsreader), ui-serif, Georgia, serif;
   }
 
