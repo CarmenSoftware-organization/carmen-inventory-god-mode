@@ -5,10 +5,9 @@ import type { BlastRadius } from "@/lib/cascade";
 import { useOperationStream } from "@/components/use-operation-stream";
 import { OperationProgress } from "@/components/operation-progress";
 import { Alert } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, THead, TBody, TR, Th, Td } from "@/components/ui/table";
+import { SealConfirm } from "@/components/seal-confirm";
 
 export function ConfirmDelete({
   schema,
@@ -30,35 +29,29 @@ export function ConfirmDelete({
   requiredPhrase: string;
 }) {
   const { state, start } = useOperationStream();
-  const [confirm, setConfirm] = useState("");
   const [dropSchema, setDropSchema] = useState(false);
 
   const parsed = JSON.parse(pkJson);
   const pks: Record<string, unknown>[] = Array.isArray(parsed) ? parsed : [parsed];
   const running = state.phase === "running";
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function submit() {
     start("/api/ops/cascade-delete", {
       schema,
       table,
       pks,
       dropSchema,
-      confirm,
+      confirm: requiredPhrase,
     });
   }
 
   return (
-    <form onSubmit={onSubmit} className="max-w-2xl">
-      <div className="overflow-hidden rounded-lg border border-danger-border bg-surface">
-        {/* Hazard tape — the signature frame for an irreversible action. */}
-        <span aria-hidden="true" className="hazard-tape block h-2" />
-        <div className="flex items-center gap-2 border-b border-danger-border bg-danger-subtle px-4 py-2.5">
-          <span className="eyebrow text-danger">Armed</span>
-          <span aria-hidden="true" className="text-danger-border">
-            /
-          </span>
-          <span className="eyebrow text-danger-subtle-foreground">Irreversible</span>
+    <div className="max-w-2xl">
+      <div className="overflow-hidden rounded-md border border-danger-border bg-surface">
+        <div className="flex items-center gap-2 rule-double bg-danger-subtle px-4 py-2.5">
+          <span className="rubric rubric-seal">Armed</span>
+          <span aria-hidden="true" className="text-danger-border">/</span>
+          <span className="rubric text-danger-subtle-foreground">Irreversible</span>
         </div>
 
         <div className="space-y-4 p-4">
@@ -128,43 +121,23 @@ export function ConfirmDelete({
         </div>
       )}
 
-      {/* Confirm phrase input */}
-      <div className="space-y-1.5">
-        <label htmlFor="confirm-input" className="block text-sm font-medium">
-          Type{" "}
-          <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
-            {requiredPhrase}
-          </code>{" "}
-          to confirm:
-        </label>
-        <Input
-          id="confirm-input"
-          name="confirm"
-          autoComplete="off"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-        />
-        {isBusinessUnit && tenantSchema && (
-          <p className="text-xs text-foreground-subtle">
-            If you check the schema-drop box, the required phrase becomes the schema name.
-          </p>
-        )}
-      </div>
+      {isBusinessUnit && tenantSchema && (
+        <p className="text-xs text-foreground-subtle">
+          If you check the schema-drop box, the required phrase becomes the schema name.
+        </p>
+      )}
 
-      <Button
-        type="submit"
-        variant="danger"
-        size="lg"
-        disabled={radius.truncated || running}
+      <SealConfirm
+        requiredPhrase={requiredPhrase}
+        onStamp={submit}
+        disabled={radius.truncated}
         pending={running}
-        className="w-full font-display uppercase tracking-[0.12em]"
-      >
-        {running ? "Deleting..." : "Permanently delete"}
-      </Button>
+        label="Seal and permanently delete"
+      />
 
       <OperationProgress state={state} rolledBackOnError />
         </div>
       </div>
-    </form>
+    </div>
   );
 }

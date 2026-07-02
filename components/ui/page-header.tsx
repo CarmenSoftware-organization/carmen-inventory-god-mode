@@ -1,19 +1,19 @@
 import { cn } from "@/lib/cn";
 
 /**
- * Page heading in the instrument-console voice: an optional mission-control
- * eyebrow with a readout marker, a display-mono title, an optional lede, and
- * actions that slot to the right. The marker stays ink (monochrome) — colour
- * is reserved for consequence, never decoration.
+ * Page heading in the ledger voice: an optional rubric line, a display-mono
+ * title (Fraunces), an optional lede, and actions that slot to the right.
+ * The rubric carries the hierarchical voice; colour is reserved for
+ * consequence, never decoration.
  */
 export function PageHeader({
-  eyebrow,
+  rubric,
   title,
   lede,
   actions,
   className,
 }: {
-  eyebrow?: string;
+  rubric?: string;
   title: string;
   lede?: React.ReactNode;
   actions?: React.ReactNode;
@@ -23,15 +23,8 @@ export function PageHeader({
     <header className={cn("mb-6 border-b border-border pb-4", className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          {eyebrow && (
-            <p className="eyebrow mb-2 flex items-center gap-1.5">
-              <span aria-hidden="true" className="text-foreground">
-                ▌
-              </span>
-              {eyebrow}
-            </p>
-          )}
-          <h1 className="font-display text-xl font-medium tracking-tight text-foreground">
+          {rubric && <p className="rubric mb-2">{rubric}</p>}
+          <h1 className="font-display text-2xl font-medium tracking-tight text-foreground">
             {title}
           </h1>
           {lede && (
@@ -46,7 +39,7 @@ export function PageHeader({
   );
 }
 
-/** Section label inside a page — a smaller readout eyebrow with the ink marker. */
+/** Section label inside a page — a smaller readout rubric. */
 export function SectionLabel({
   children,
   className,
@@ -54,12 +47,5 @@ export function SectionLabel({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <p className={cn("eyebrow mb-3 flex items-center gap-1.5", className)}>
-      <span aria-hidden="true" className="text-foreground">
-        ▌
-      </span>
-      {children}
-    </p>
-  );
+  return <p className={cn("rubric mb-3", className)}>{children}</p>;
 }

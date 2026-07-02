@@ -10,123 +10,118 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ------------------------------------------------------------------ */
-/*  Design tokens — "ink on instrument paper"                          */
+/*  Design tokens — "The Register of Carmen" (ledger)                  */
 /*                                                                    */
 /*  Off-black / off-white only (no pure #000 / #fff, per a11y rule).  */
-/*  Neutral ramp is a cool blue-slate (NOT zinc) so the chrome reads  */
-/*  as a technical instrument, not a default admin template. Chrome   */
-/*  stays monochrome ink; colour is reserved for CONSEQUENCE + STATE  */
+/*  Warm, organized palette like aged paper in a leather-bound ledger. */
+/*  Chrome stays monochrome ink; colour reserved for STATE + SEAL.     */
 /*  (danger / warning / success / live target). One restrained        */
-/*  identity hue (steel-cyan) is spent only on navigation links.      */
+/*  identity hue (register blue) is spent only on navigation links.   */
 /* ------------------------------------------------------------------ */
 
 :root {
-  /* Base surfaces + text */
-  --background: #f4f6f8; /* cool instrument paper (faint blue-slate) */
-  --surface: #ffffff; /* cards, tables, inputs */
-  --surface-hover: #eef1f4; /* slate-100-ish */
-  --surface-muted: #edf0f3; /* secondary panels */
-  --foreground: #0e1620; /* deep slate-navy INK — primary text */
-  --foreground-muted: #475467; /* slate-600 — secondary text */
-  --foreground-subtle: #697586; /* slate-500 — tertiary / hints */
-  --border: #dce0e6; /* cool hairlines */
-  --border-strong: #c2c8d0; /* focused / strong */
-  --ring: #0e1620; /* focus ring */
+  /* Base surfaces + text — "daylight on paper" */
+  --background: #eae8e1; /* oyster paper, cool */
+  --surface: #f5f3ed; /* leaf — cards, tables, inputs */
+  --surface-hover: #edebe3;
+  --surface-muted: #e4e2da;
+  --foreground: #1b2230; /* blue-black ink */
+  --foreground-muted: #565e6e;
+  --foreground-subtle: #5f6674;
+  --border: #cdcabf; /* hairline rule */
+  --border-strong: #b4b0a3;
+  --ring: #1b2230;
 
-  /* Accent — restrained, monochrome ink. Primary actions use foreground. */
-  --accent: #0e1620;
-  --accent-hover: #1f2a37;
-  --accent-foreground: #f4f6f8;
+  /* Primary action = ink */
+  --accent: #1b2230;
+  --accent-hover: #2c3446;
+  --accent-foreground: #f5f3ed;
 
-  /* Link — the one identity hue: steel-cyan, for navigation targets only. */
-  --link: #0f7595; /* cyan-700-ish — instrument steel */
-  --link-hover: #0b5a73;
+  /* Link — register blue, underline-first */
+  --link: #2c4a7c;
+  --link-hover: #1e3560;
 
-  /* Semantic: danger */
-  --danger: #dc2626; /* red-600 */
-  --danger-hover: #b91c1c; /* red-700 */
-  --danger-foreground: #ffffff;
-  --danger-subtle: #fef2f2; /* red-50 — soft fill */
-  --danger-subtle-foreground: #991b1b; /* red-800 */
-  --danger-border: #fecaca; /* red-200 */
+  /* Signature: the seal (also the danger family) */
+  --seal: #b23a2e; /* oxblood */
+  --seal-hover: #9a3227;
 
-  /* Semantic: warning */
-  --warning: #d97706; /* amber-600 */
-  --warning-foreground: #1a1a1a; /* dark text on amber */
-  --warning-subtle: #fffbeb; /* amber-50 */
-  --warning-subtle-foreground: #92400e; /* amber-800 */
-  --warning-border: #fde68a; /* amber-200 */
-  --warning-strong: #f59e0b; /* amber-500 — TENANT banner fill */
+  --danger: #b23a2e;
+  --danger-hover: #9a3227;
+  --danger-foreground: #f5f3ed;
+  --danger-subtle: #f6e9e5;
+  --danger-subtle-foreground: #8a2c22; /* small danger TEXT uses this */
+  --danger-border: #e4c3bc;
 
-  /* Semantic: success */
-  --success: #16a34a; /* green-600 */
-  --success-hover: #15803d; /* green-700 */
-  --success-subtle: #f0fdf4; /* green-50 */
-  --success-subtle-foreground: #166534; /* green-800 */
-  --success-border: #bbf7d0; /* green-200 */
+  --warning: #b07a26; /* aged amber */
+  --warning-foreground: #1b2230;
+  --warning-subtle: #f5edd9;
+  --warning-subtle-foreground: #7a521a;
+  --warning-border: #e4d3a6;
+  --warning-strong: #bd8730;
 
-  /* Semantic: info */
-  --info: #2563eb; /* blue-600 */
-  --info-subtle: #eff6ff; /* blue-50 */
-  --info-subtle-foreground: #1e40af; /* blue-800 */
-  --info-border: #bfdbfe; /* blue-200 */
+  --success: #2f5d4e; /* bottle green — committed */
+  --success-hover: #274e41;
+  --success-subtle: #e4ede7;
+  --success-subtle-foreground: #234a3e;
+  --success-border: #bcd1c7;
 
-  /* Consequence language — hazard tape (industrial caution markings) */
-  --hazard: #d97706; /* amber-600 — tape + armed-control accent */
-  --hazard-ink: #0e1620; /* dark stripe paired with amber tape */
+  --info: #2c4a7c;
+  --info-subtle: #e5e9f1;
+  --info-subtle-foreground: #223c66;
+  --info-border: #becbdf;
 
-  /* Live-target rail — neutral when LOCAL, danger-tinted when LIVE */
-  --target-idle: #697586; /* slate — calm "local" indicator */
+  --target-idle: #7a818e;
 }
 
 .dark {
-  /* Control-room-at-night: dark slate-blue, never pure/hacker black. */
-  --background: #0c1116; /* very dark slate-blue */
-  --surface: #131a22; /* raised panel */
-  --surface-hover: #1b232d;
-  --surface-muted: #131a22;
-  --foreground: #e7ecf1; /* off-white, faint cool */
-  --foreground-muted: #9aa7b4; /* slate-400 — secondary text */
-  --foreground-subtle: #6b7785; /* slate-500 */
-  --border: #232d38;
-  --border-strong: #34404d;
-  --ring: #e7ecf1;
+  /* "reading by lamplight" — warm, never blue-black */
+  --background: #181510;
+  --surface: #211e17;
+  --surface-hover: #2a2619;
+  --surface-muted: #1c1a14;
+  --foreground: #ece7da; /* warm parchment */
+  --foreground-muted: #a29b89;
+  --foreground-subtle: #928a78;
+  --border: #332e22;
+  --border-strong: #48412f;
+  --ring: #ece7da;
 
-  --accent: #e7ecf1;
-  --accent-hover: #cdd6df;
-  --accent-foreground: #0e1620;
+  --accent: #ece7da;
+  --accent-hover: #d8d2c3;
+  --accent-foreground: #181510;
 
-  --link: #5bc5de; /* steel-cyan, dark variant */
-  --link-hover: #86d6e8;
+  --link: #8fa9d8;
+  --link-hover: #abbfe4;
 
-  --danger: #f87171; /* red-400 */
-  --danger-hover: #fca5a5; /* red-300 */
-  --danger-foreground: #18181b;
-  --danger-subtle: #450a0a; /* red-950 */
-  --danger-subtle-foreground: #fca5a5; /* red-300 */
-  --danger-border: #7f1d1d; /* red-900 */
+  --seal: #df6559;
+  --seal-hover: #e06b60;
 
-  --warning: #fbbf24; /* amber-400 */
-  --warning-foreground: #18181b;
-  --warning-subtle: #451a03; /* amber-950 */
-  --warning-subtle-foreground: #fcd34d; /* amber-300 */
-  --warning-border: #78350f; /* amber-900 */
-  --warning-strong: #d97706; /* amber-600 */
+  --danger: #df6559;
+  --danger-hover: #e06b60;
+  --danger-foreground: #181510;
+  --danger-subtle: #2e1512;
+  --danger-subtle-foreground: #f0b3ac;
+  --danger-border: #5a241d;
 
-  --success: #4ade80; /* green-400 */
-  --success-hover: #86efac;
-  --success-subtle: #052e16; /* green-950 */
-  --success-subtle-foreground: #86efac; /* green-300 */
-  --success-border: #14532d; /* green-900 */
+  --warning: #d6a24a;
+  --warning-foreground: #181510;
+  --warning-subtle: #2a2010;
+  --warning-subtle-foreground: #e6c88a;
+  --warning-border: #5a4620;
+  --warning-strong: #d6a24a;
 
-  --info: #60a5fa;
-  --info-subtle: #172554; /* blue-950 */
-  --info-subtle-foreground: #93c5fd; /* blue-300 */
-  --info-border: #1e3a8a; /* blue-900 */
+  --success: #6fa98c;
+  --success-hover: #83bb9e;
+  --success-subtle: #12241c;
+  --success-subtle-foreground: #a7cfbc;
+  --success-border: #274a3b;
 
-  --hazard: #fbbf24; /* amber-400 — brighter tape on dark */
-  --hazard-ink: #0c1116;
-  --target-idle: #6b7785;
+  --info: #8fa9d8;
+  --info-subtle: #141c2c;
+  --info-subtle-foreground: #b3c5e6;
+  --info-border: #2a3b5a;
+
+  --target-idle: #79725f;
 }
 
 /* Expose tokens to Tailwind utilities (bg-background, text-foreground, etc.) */
@@ -174,21 +169,21 @@
   --color-info-subtle-foreground: var(--info-subtle-foreground);
   --color-info-border: var(--info-border);
 
-  --color-hazard: var(--hazard);
-  --color-hazard-ink: var(--hazard-ink);
+  --color-seal: var(--seal);
+  --color-seal-hover: var(--seal-hover);
   --color-target-idle: var(--target-idle);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-martian-mono);
+  --font-sans: var(--font-newsreader);
+  --font-mono: var(--font-plex-mono);
+  --font-display: var(--font-fraunces);
 }
 
 @layer base {
   body {
     background: var(--background);
     color: var(--foreground);
-    /* Use the loaded Geist font, NOT Arial. Falls back through system fonts. */
-    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    /* Use the loaded Newsreader body font. Falls back through system serif. */
+    font-family: var(--font-newsreader), ui-serif, Georgia, serif;
   }
 
   /* Default focus-visible ring: token-driven, visible in both themes. */
@@ -205,64 +200,88 @@
       translate: 0 1px;
     }
   }
+
+  /* Page-load motion: the folio settles into place. Reduced-motion-safe. */
+  @media (prefers-reduced-motion: no-preference) {
+    main {
+      animation: folio-in 260ms ease-out both;
+    }
+    @keyframes folio-in {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
 }
 
 /* ------------------------------------------------------------------ */
-/*  Identity utilities — the instrument-console vernacular.            */
+/*  Identity utilities — the ledger vernacular.                        */
 /* ------------------------------------------------------------------ */
 @layer components {
   /*
-   * Eyebrow: a mission-control readout label. Display mono, uppercase,
-   * widely tracked. Carries the page/section voice without a heading.
+   * Rubric: the red manuscript heading — small, uppercase, widely tracked.
+   * Carries section voice with serif formality.
    */
-  .eyebrow {
-    font-family: var(--font-martian-mono), ui-monospace, monospace;
+  .rubric {
+    font-family: var(--font-newsreader), ui-serif, Georgia, serif;
     font-size: 11px;
     font-weight: 500;
     line-height: 1;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--foreground-subtle);
   }
+  .rubric-seal {
+    color: var(--seal);
+  }
 
-  /*
-   * Hazard tape: diagonal industrial caution markings. The single
-   * signature motif — used ONLY to frame irreversible / SYSTEM surfaces.
-   */
-  .hazard-tape {
-    background-image: repeating-linear-gradient(
-      -45deg,
-      var(--hazard) 0 8px,
-      var(--hazard-ink) 8px 16px
-    );
+  /* Double rule — the ledger divider under titles / above totals. */
+  .rule-double {
+    border-bottom: 3px double var(--border-strong);
   }
 
   /*
-   * Live-target dot: a steady-by-default status light. When marked
-   * [data-live] it breathes slowly — the system is alive and writable.
+   * Wax seal — the target-status disc in the masthead. Meaning is carried by
+   * FILL (pressed vs. blank), never motion, so it is reduced-motion-safe.
    */
-  .target-dot {
-    width: 7px;
-    height: 7px;
+  .seal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
     border-radius: 9999px;
-    background: var(--target-idle);
-    box-shadow: 0 0 0 0 transparent;
+    border: 1.5px solid var(--border-strong);
+    background: transparent;
+    color: var(--foreground-subtle);
+    font-family: var(--font-newsreader), ui-serif, Georgia, serif;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
-  .target-dot[data-live="true"] {
-    background: var(--danger);
+  .seal[data-live="true"] {
+    border-color: var(--seal);
+    background: var(--seal);
+    color: var(--danger-foreground);
   }
-  @media (prefers-reduced-motion: no-preference) {
-    .target-dot[data-live="true"] {
-      animation: target-pulse 2.4s ease-in-out infinite;
-    }
-  }
-  @keyframes target-pulse {
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 55%, transparent);
-    }
-    50% {
-      box-shadow: 0 0 0 4px transparent;
-    }
+
+  /* Stamp mark — the persistent seal glyph beside a sealed audit entry. */
+  .stamp-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 9999px;
+    border: 1.5px solid var(--seal);
+    color: var(--seal);
+    font-size: 9px;
+    line-height: 1;
   }
 }

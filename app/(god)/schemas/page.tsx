@@ -3,7 +3,6 @@ import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { BusinessUnitsTable } from "@/components/business-units-table";
 import { listBusinessUnits, listSelectableSchemas } from "@/lib/registry";
 import { Button } from "@/components/ui/button";
-import { Table, TBody, TR, Td } from "@/components/ui/table";
 import { PageHeader, SectionLabel } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +12,7 @@ export default async function SchemasPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Registry"
+        rubric="Registry"
         title="Schemas"
         lede="Pick a target schema to inspect its tables and rows, or manage business units."
       />
@@ -39,23 +38,25 @@ export default async function SchemasPage() {
         {/* All schemas */}
         <section>
           <SectionLabel>All schemas</SectionLabel>
-          <Table>
-            <TBody>
+          <div className="overflow-hidden rounded-md border border-border bg-surface">
+            <div className="rule-double flex items-center justify-between px-4 py-2">
+              <span className="rubric">Schema</span>
+              <span className="rubric">Open</span>
+            </div>
+            <ul>
               {sel.allSchemas.map((s) => (
-                <TR key={s}>
-                  <Td>
-                    <Link
-                      href={`/${encodeURIComponent(s)}/tables`}
-                      className="inline-flex items-center gap-1 font-mono text-xs text-link hover:text-link-hover"
-                    >
-                      {s}
-                      <CaretRight className="h-3 w-3" aria-hidden="true" />
-                    </Link>
-                  </Td>
-                </TR>
+                <li key={s} className="border-b border-border last:border-0">
+                  <Link
+                    href={`/${encodeURIComponent(s)}/tables`}
+                    className="flex items-center justify-between gap-2 px-4 py-2.5 transition-colors hover:bg-surface-hover"
+                  >
+                    <span className="truncate font-mono text-[13px] text-foreground">{s}</span>
+                    <CaretRight className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" aria-hidden="true" />
+                  </Link>
+                </li>
               ))}
-            </TBody>
-          </Table>
+            </ul>
+          </div>
         </section>
       </div>
     </div>
