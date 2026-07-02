@@ -9,6 +9,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 export const dynamic = "force-dynamic";
 const OPS: Operation[] = ["INSERT", "UPDATE", "DELETE", "CASCADE_DELETE", "CREATE_SCHEMA", "DROP_SCHEMA", "RAW_SQL"];
 
+// Irreversible operations carry the seal mark in the record.
+const SEALED: ReadonlySet<Operation> = new Set(["DELETE", "CASCADE_DELETE", "DROP_SCHEMA"]);
+
 // Map operation types to badge variants (status never by color alone: text carries it).
 function opVariant(op: Operation) {
   switch (op) {
@@ -37,7 +40,10 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="space-y-4">
-      <h1 className="text-base font-semibold tracking-tight">Audit log</h1>
+      <div>
+        <p className="rubric">The Record</p>
+        <h1 className="font-display text-2xl font-medium tracking-tight">Audit log</h1>
+      </div>
 
       {/* Filter form */}
       <form className="flex flex-wrap items-center gap-2">
@@ -75,6 +81,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       <Table>
         <THead>
           <TR>
+            <Th className="text-right">#</Th>
             <Th>At</Th>
             <Th>Actor</Th>
             <Th>Target</Th>
@@ -86,7 +93,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         <TBody>
           {entries.length === 0 ? (
             <tr>
-              <td colSpan={6}>
+              <td colSpan={7}>
                 <EmptyState
                   icon="search"
                   title="No audit entries"
@@ -95,9 +102,12 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
               </td>
             </tr>
           ) : (
-            entries.map((e) => (
+            entries.map((e, i) => (
               <TR key={e.id} className="align-top">
-                <Td className="whitespace-nowrap text-xs text-foreground-muted">
+                <Td className="text-right font-mono text-xs tabular-nums text-foreground-subtle">
+                  {String(entries.length - i).padStart(3, "0")}
+                </Td>
+                <Td className="whitespace-nowrap font-mono text-xs text-foreground-muted">
                   {e.at}
                 </Td>
                 <Td className="text-xs">{e.actor}</Td>
@@ -106,7 +116,14 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                   {e.tableName ? `.${e.tableName}` : ""}
                 </Td>
                 <Td>
-                  <Badge variant={opVariant(e.operation)}>{e.operation}</Badge>
+                  <span className="inline-flex items-center gap-1.5">
+                    {SEALED.has(e.operation) && (
+                      <span className="stamp-mark" aria-label="sealed" title="Sealed — irreversible">
+                        ●
+                      </span>
+                    )}
+                    <Badge variant={opVariant(e.operation)}>{e.operation}</Badge>
+                  </span>
                 </Td>
                 <Td className="font-mono text-xs text-foreground-muted">
                   {e.pk ? JSON.stringify(e.pk) : ""}
