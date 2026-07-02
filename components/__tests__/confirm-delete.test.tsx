@@ -32,7 +32,7 @@ test("no checkbox when orphanSchemas is empty/absent", async () => {
   expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
 });
 
-test("submitting POSTs the normalized payload to the cascade-delete route", async () => {
+test("stamping the seal POSTs the normalized payload to the cascade-delete route", async () => {
   const fetchMock = vi.fn(async () => {
     const enc = new TextEncoder();
     const body = new ReadableStream<Uint8Array>({
@@ -46,9 +46,9 @@ test("submitting POSTs the normalized payload to the cascade-delete route", asyn
   render(<ConfirmDelete schema="CARMEN_SYSTEM" table="tb_cluster" pkJson={JSON.stringify({ id: "1" })}
     radius={radius} isBusinessUnit={false} tenantSchema={null} requiredPhrase="DELETE" />);
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "DELETE" } });
-  fireEvent.click(screen.getByRole("button", { name: /permanently delete/i }));
+  fireEvent.mouseDown(screen.getByRole("button", { name: /seal/i }));
 
-  await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+  await waitFor(() => expect(fetchMock).toHaveBeenCalled(), { timeout: 2000 });
   const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
   expect(url).toBe("/api/ops/cascade-delete");
   expect(JSON.parse(String(init.body))).toEqual({
