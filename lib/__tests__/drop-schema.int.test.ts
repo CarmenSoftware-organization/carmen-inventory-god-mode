@@ -51,6 +51,13 @@ test("executeDropSchema drops the schema (CASCADE) and writes a DROP_SCHEMA audi
 test("executeDropSchema refuses the system schema and leaves it intact", async () => {
   const { executeDropSchema } = await import("@/lib/drop-schema");
   expect(await schemaExists("CARMEN_SYSTEM")).toBe(true);
-  await expect(executeDropSchema("CARMEN_SYSTEM")).rejects.toThrow(/system schema/i);
+  await expect(executeDropSchema("CARMEN_SYSTEM")).rejects.toThrow(/protected schema/i);
   expect(await schemaExists("CARMEN_SYSTEM")).toBe(true);
+});
+
+test("executeDropSchema refuses the public schema and leaves it intact", async () => {
+  const { executeDropSchema } = await import("@/lib/drop-schema");
+  expect(await schemaExists("public")).toBe(true);
+  await expect(executeDropSchema("public")).rejects.toThrow(/protected schema/i);
+  expect(await schemaExists("public")).toBe(true);
 });

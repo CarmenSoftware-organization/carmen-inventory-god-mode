@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/session";
-import { executeDropSchema, isSystemSchema } from "@/lib/drop-schema";
+import { executeDropSchema, isProtectedSchema } from "@/lib/drop-schema";
 import { streamOperation } from "@/lib/progress";
 
 export const runtime = "nodejs";
@@ -19,9 +19,9 @@ export async function POST(request: Request): Promise<Response> {
   if (typeof schema !== "string" || schema.length === 0) {
     return Response.json({ error: "No schema specified" }, { status: 400 });
   }
-  if (isSystemSchema(schema)) {
+  if (isProtectedSchema(schema)) {
     return Response.json(
-      { error: `Refusing to drop the system schema "${schema}".` },
+      { error: `Refusing to drop the protected schema "${schema}".` },
       { status: 400 },
     );
   }

@@ -4,6 +4,7 @@ import { BusinessUnitsTable } from "@/components/business-units-table";
 import { listBusinessUnits, listSelectableSchemas } from "@/lib/registry";
 import { Button } from "@/components/ui/button";
 import { PageHeader, SectionLabel } from "@/components/ui/page-header";
+import { isProtectedSchema } from "@/lib/drop-schema";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ export default async function SchemasPage() {
                     <span className="truncate font-mono text-[13px] text-foreground">{s}</span>
                   </Link>
                   <div className="flex shrink-0 items-center gap-4">
-                    {s === sel.system ? (
+                    {isProtectedSchema(s) ? (
                       <span className="text-xs font-medium uppercase tracking-wider text-foreground-subtle">
                         Protected
                       </span>
