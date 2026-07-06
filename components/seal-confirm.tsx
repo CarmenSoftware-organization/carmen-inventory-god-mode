@@ -4,11 +4,12 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 
 /**
- * The seal — a two-step irreversible-action ceremony that replaces a plain
- * destructive submit button. Step one: type the exact confirm phrase to ARM
- * the seal. Step two: press-and-hold the seal (~holdMs) to STAMP, which fires
- * `onStamp`. Releasing early cancels. Keyboard: focus + hold Space/Enter.
- * Meaning-by-fill + a real hold make the friction proportional to consequence.
+ * A two-step irreversible-action confirm ceremony that replaces a plain
+ * destructive submit button. Step one: type the exact confirm phrase to arm
+ * the control. Step two: press-and-hold the control (~holdMs) to confirm,
+ * which fires `onStamp`. Releasing early cancels. Keyboard: focus + hold
+ * Space/Enter. Meaning-by-fill + a real hold make the friction proportional
+ * to consequence.
  */
 export function SealConfirm({
   requiredPhrase,
@@ -16,7 +17,7 @@ export function SealConfirm({
   disabled = false,
   pending = false,
   holdMs = 700,
-  label = "Seal & execute",
+  label = "Confirm & execute",
 }: {
   requiredPhrase: string;
   onStamp: () => void;
@@ -71,11 +72,11 @@ export function SealConfirm({
   const showHold = holding && !disabled && !pending;
 
   const face = sealed
-    ? "Sealed"
+    ? "Confirmed"
     : pending
-      ? "Sealing…"
+      ? "Confirming…"
       : armed
-        ? "Press & hold to seal"
+        ? "Press & hold to confirm"
         : "Type the phrase to arm";
 
   return (
@@ -86,7 +87,7 @@ export function SealConfirm({
           <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
             {requiredPhrase}
           </code>{" "}
-          to arm the seal:
+          to arm:
         </label>
         <Input
           id="seal-confirm-input"

@@ -46,7 +46,7 @@ test("stamping the seal POSTs the normalized payload to the cascade-delete route
   render(<ConfirmDelete schema="CARMEN_SYSTEM" table="tb_cluster" pkJson={JSON.stringify({ id: "1" })}
     radius={radius} isBusinessUnit={false} tenantSchema={null} requiredPhrase="DELETE" />);
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "DELETE" } });
-  fireEvent.mouseDown(screen.getByRole("button", { name: /seal/i }));
+  fireEvent.mouseDown(screen.getByRole("button", { name: /confirm/i }));
 
   await waitFor(() => expect(fetchMock).toHaveBeenCalled(), { timeout: 2000 });
   const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];

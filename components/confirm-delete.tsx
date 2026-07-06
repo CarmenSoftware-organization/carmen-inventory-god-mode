@@ -132,7 +132,7 @@ export function ConfirmDelete({
         onStamp={submit}
         disabled={radius.truncated}
         pending={running}
-        label="Seal and permanently delete"
+        label="Confirm and permanently delete"
       />
 
       <OperationProgress state={state} rolledBackOnError />

@@ -16,7 +16,7 @@ export function TargetBar() {
     <div
       role="status"
       className={cn(
-        "flex h-8 items-center gap-2 px-4 text-xs sm:px-6",
+        "flex h-8 items-center gap-2 pl-14 pr-4 text-xs sm:pr-6 md:pl-6",
         live
           ? "bg-danger text-danger-foreground"
           : "bg-surface-muted text-foreground-muted",
