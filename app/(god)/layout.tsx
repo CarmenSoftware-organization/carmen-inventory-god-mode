@@ -8,7 +8,7 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TargetBar />
         <div className="flex-1 overflow-y-auto">
-          <main className="mx-auto w-full max-w-[1280px] px-4 py-6 md:px-8">
+          <main className="w-full px-4 py-6 md:px-8">
             {children}
           </main>
         </div>
