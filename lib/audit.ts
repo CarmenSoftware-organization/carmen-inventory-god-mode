@@ -1,10 +1,23 @@
-import type { TransactionSql } from "postgres";
+import type { Parameter, TransactionSql } from "postgres";
 import { getSql } from "@/lib/db";
 import { env } from "@/lib/env";
 import { qualified } from "@/lib/sql-guard";
 
 export type Operation = "INSERT" | "UPDATE" | "DELETE" | "CASCADE_DELETE" | "CREATE_SCHEMA" | "DROP_SCHEMA" | "RAW_SQL" | "SOFT_DELETE" | "RESTORE" | "MIGRATION";
 export type AuditEntry = { actor: string; schemaName: string; tableName: string | null; operation: Operation; pk: unknown; oldValues: unknown; newValues: unknown; statement: string | null };
+
+export type AuditRow = {
+  id: string; at: string; actor: string; schemaName: string;
+  tableName: string | null; operation: Operation;
+  pk: unknown; oldValues: unknown; newValues: unknown; statement: string | null;
+};
+
+function encodeCursor(v: [string, string]): string {
+  return Buffer.from(JSON.stringify(v)).toString("base64url");
+}
+function decodeCursor(c: string): [string, string] {
+  return JSON.parse(Buffer.from(c, "base64url").toString("utf8")) as [string, string];
+}
 
 function auditRel(): string { return qualified(env().systemSchemaName, "tb_god_mode_audit"); }
 
@@ -33,21 +46,46 @@ export async function writeAudit(tx: TransactionSql, e: AuditEntry): Promise<voi
   );
 }
 
-export async function listAudit(filter: { schema?: string; table?: string; operation?: Operation; limit?: number } = {}) {
-  const conds: string[] = []; const args: (string | number)[] = [];
+export async function listAuditPage(
+  filter: { schema?: string; table?: string; operation?: Operation; limit?: number; cursor?: string | null } = {},
+): Promise<{ entries: AuditRow[]; nextCursor: string | null }> {
+  const conds: string[] = []; const args: (string | number | Parameter<string>)[] = [];
   if (filter.schema) { args.push(filter.schema); conds.push(`schema_name = $${args.length}`); }
   if (filter.table) { args.push(filter.table); conds.push(`table_name = $${args.length}`); }
   if (filter.operation) { args.push(filter.operation); conds.push(`operation = $${args.length}`); }
-  args.push(Math.min(filter.limit ?? 100, 500));
+  if (filter.cursor) {
+    const [curAt, curId] = decodeCursor(filter.cursor);
+    // postgres.js infers this placeholder's wire type as timestamptz (from the `::timestamptz`
+    // cast below) and, once it learns that, re-serializes the value via `new Date(x).toISOString()`,
+    // which silently truncates microseconds to milliseconds — corrupting keyset comparisons
+    // whenever rows share a timestamp to sub-millisecond resolution (e.g. many audit rows
+    // written in one transaction, which all share the same `now()`). Forcing the wire type to
+    // text (OID 25) makes postgres.js send the value verbatim; Postgres then parses the text
+    // itself with full microsecond precision via the explicit `::timestamptz` cast.
+    args.push(getSql().typed(curAt, 25)); const atIdx = args.length;
+    args.push(curId); const idIdx = args.length;
+    // Keyset for ORDER BY at DESC, id DESC: next page is strictly "less than" the cursor row.
+    conds.push(`(at, id) < ($${atIdx}::timestamptz, $${idIdx}::uuid)`);
+  }
+  const limit = Math.min(filter.limit ?? 50, 500);
+  args.push(limit + 1);
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
   const rows = (await getSql().unsafe(
     `SELECT id::text, at::text, actor, schema_name, table_name, operation, pk, old_values, new_values, statement
-     FROM ${auditRel()} ${where} ORDER BY at DESC LIMIT $${args.length}`, args)) as unknown as {
+     FROM ${auditRel()} ${where} ORDER BY at DESC, id DESC LIMIT $${args.length}`, args)) as unknown as {
     id: string; at: string; actor: string; schema_name: string; table_name: string | null;
     operation: string; pk: unknown; old_values: unknown; new_values: unknown; statement: string | null;
   }[];
+
+  let nextCursor: string | null = null;
+  if (rows.length > limit) {
+    rows.pop();
+    const last = rows[rows.length - 1];
+    nextCursor = encodeCursor([last.at, last.id]);
+  }
+
   const parseJson = (v: unknown) => (typeof v === "string" ? JSON.parse(v) : v);
-  return rows.map((r) => ({
+  const entries: AuditRow[] = rows.map((r) => ({
     id: r.id, at: r.at, actor: r.actor, schemaName: r.schema_name, tableName: r.table_name,
     operation: r.operation as Operation,
     pk: r.pk == null ? null : parseJson(r.pk),
@@ -55,4 +93,11 @@ export async function listAudit(filter: { schema?: string; table?: string; opera
     newValues: r.new_values == null ? null : parseJson(r.new_values),
     statement: r.statement,
   }));
+  return { entries, nextCursor };
+}
+
+export async function listAudit(
+  filter: { schema?: string; table?: string; operation?: Operation; limit?: number } = {},
+): Promise<AuditRow[]> {
+  return (await listAuditPage(filter)).entries;
 }
