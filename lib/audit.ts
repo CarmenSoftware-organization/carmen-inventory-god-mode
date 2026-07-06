@@ -67,7 +67,7 @@ export async function listAuditPage(
     // Keyset for ORDER BY at DESC, id DESC: next page is strictly "less than" the cursor row.
     conds.push(`(at, id) < ($${atIdx}::timestamptz, $${idIdx}::uuid)`);
   }
-  const limit = Math.min(filter.limit ?? 50, 500);
+  const limit = Math.min(Math.max(filter.limit ?? 50, 1), 500);
   args.push(limit + 1);
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
   const rows = (await getSql().unsafe(
