@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { AuditChanges } from "@/components/audit-changes";
 
 export const dynamic = "force-dynamic";
 const OPS: Operation[] = ["INSERT", "UPDATE", "DELETE", "CASCADE_DELETE", "CREATE_SCHEMA", "DROP_SCHEMA", "RAW_SQL"];
@@ -139,17 +140,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                 <Td className="font-mono text-xs text-foreground-muted">
                   {e.pk ? JSON.stringify(e.pk) : ""}
                 </Td>
-                <Td className="max-w-md">
-                  <details className="group">
-                    <summary className="cursor-pointer text-xs font-medium text-link hover:text-link-hover">
-                      view
-                    </summary>
-                    <pre className="mt-1 whitespace-pre-wrap rounded-md bg-surface-muted p-2 font-mono text-xs">
-                      old: {JSON.stringify(e.oldValues, null, 2)}
-                      {"\n"}new: {JSON.stringify(e.newValues, null, 2)}
-                      {e.statement ? `\nsql: ${e.statement}` : ""}
-                    </pre>
-                  </details>
+                <Td>
+                  <AuditChanges entry={e} />
                 </Td>
               </TR>
             ))
