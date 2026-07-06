@@ -1,11 +1,6 @@
 import { cn } from "@/lib/cn";
 
-/**
- * Page heading in the ledger voice: an optional rubric line, a display-mono
- * title (Fraunces), an optional lede, and actions that slot to the right.
- * The rubric carries the hierarchical voice; colour is reserved for
- * consequence, never decoration.
- */
+/** Page heading: an optional eyebrow label, a title, an optional lede, and right-aligned actions. */
 export function PageHeader({
   rubric,
   title,
@@ -23,23 +18,25 @@ export function PageHeader({
     <header className={cn("mb-6 border-b border-border pb-4", className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          {rubric && <p className="rubric mb-2">{rubric}</p>}
-          <h1 className="font-display text-2xl font-medium tracking-tight text-foreground">
+          {rubric && (
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-foreground-muted">
+              {rubric}
+            </p>
+          )}
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             {title}
           </h1>
           {lede && (
             <p className="mt-1.5 max-w-prose text-sm text-foreground-muted">{lede}</p>
           )}
         </div>
-        {actions && (
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
-        )}
+        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
     </header>
   );
 }
 
-/** Section label inside a page — a smaller readout rubric. */
+/** Section label inside a page. */
 export function SectionLabel({
   children,
   className,
@@ -47,5 +44,9 @@ export function SectionLabel({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <p className={cn("rubric mb-3", className)}>{children}</p>;
+  return (
+    <p className={cn("mb-3 text-xs font-semibold uppercase tracking-wider text-foreground-muted", className)}>
+      {children}
+    </p>
+  );
 }

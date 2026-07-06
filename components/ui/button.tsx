@@ -28,7 +28,7 @@ const variants = {
     "bg-warning text-warning-foreground hover:bg-warning/90 shadow-sm",
   // Success (green, for restore)
   success:
-    "bg-success text-white hover:bg-success-hover shadow-sm",
+    "bg-success text-accent-foreground hover:bg-success-hover shadow-sm",
 } as const;
 
 const sizes = {

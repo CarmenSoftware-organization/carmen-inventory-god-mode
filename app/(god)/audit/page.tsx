@@ -41,8 +41,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   return (
     <div className="space-y-4">
       <div>
-        <p className="rubric">The Record</p>
-        <h1 className="font-display text-2xl font-medium tracking-tight">Audit log</h1>
+        <p className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">The Record</p>
+        <h1 className="text-2xl font-medium tracking-tight">Audit log</h1>
       </div>
 
       {/* Filter form */}
@@ -118,7 +118,12 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                 <Td>
                   <span className="inline-flex items-center gap-1.5">
                     {SEALED.has(e.operation) && (
-                      <span className="stamp-mark" role="img" aria-label="sealed" title="Sealed — irreversible">
+                      <span
+                        role="img"
+                        aria-label="sealed"
+                        title="Sealed — irreversible"
+                        className="inline-flex h-4 w-4 items-center justify-center rounded-full border-[1.5px] border-seal text-[9px] leading-none text-seal"
+                      >
                         ●
                       </span>
                     )}

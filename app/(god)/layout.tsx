@@ -25,10 +25,10 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
             className="mr-1 flex items-baseline gap-2"
             aria-label="The Register of Carmen — home"
           >
-            <span className="font-display text-lg font-medium tracking-tight text-foreground">
+            <span className="text-lg font-medium tracking-tight text-foreground">
               CARMEN
             </span>
-            <span className="rubric rubric-seal">Register</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-danger">Register</span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
@@ -46,11 +46,19 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
               live ? "text-danger" : "text-foreground-subtle",
             )}
           >
-            <span className="rubric">Target</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">Target</span>
             <span className="font-mono text-[11px] text-foreground-muted">
               {target.host}
             </span>
-            <span className="seal" data-live={live} aria-hidden="true">
+            <span
+              aria-hidden="true"
+              className={cn(
+                "inline-flex h-7 w-7 items-center justify-center rounded-full border text-[9px] font-semibold uppercase tracking-wide",
+                live
+                  ? "border-danger bg-danger text-danger-foreground"
+                  : "border-border-strong text-foreground-subtle",
+              )}
+            >
               {live ? "Live" : "Local"}
             </span>
             <span className="sr-only">
@@ -69,8 +77,8 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
           </form>
         </header>
 
-        {/* The ledger's running rule. */}
-        <div className="rule-double" aria-hidden="true" />
+        {/* Divider under the masthead. */}
+        <div className="border-b border-border" aria-hidden="true" />
 
         {/* Mobile target row — the persistent "where is this pointed" reminder. */}
         <div
@@ -80,14 +88,27 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
             live ? "bg-danger-subtle text-danger" : "bg-surface",
           )}
         >
-          <span className="seal !h-4 !w-4 !text-[7px]" data-live={live} aria-hidden="true">
+          <span
+            aria-hidden="true"
+            className={cn(
+              "inline-flex h-4 w-4 items-center justify-center rounded-full border text-[7px] font-semibold uppercase",
+              live
+                ? "border-danger bg-danger text-danger-foreground"
+                : "border-border-strong text-foreground-subtle",
+            )}
+          >
             {live ? "L" : "·"}
           </span>
-          <span className="rubric">Target</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">Target</span>
           <span className="truncate font-mono text-[11px] text-foreground-muted">
             {target.host}
           </span>
-          <span className={cn("rubric ml-auto shrink-0", live && "text-danger")}>
+          <span
+            className={cn(
+              "ml-auto shrink-0 text-xs font-semibold uppercase tracking-wider",
+              live ? "text-danger" : "text-foreground-muted",
+            )}
+          >
             {target.label}
           </span>
           <span className="sr-only">{live ? "Live target — writes are permanent" : "Local target"}</span>

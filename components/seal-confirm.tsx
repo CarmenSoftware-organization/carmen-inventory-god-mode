@@ -139,7 +139,7 @@ export function SealConfirm({
         />
         <span
           className={cn(
-            "relative font-display text-sm font-medium uppercase tracking-[0.12em]",
+            "relative text-sm font-medium uppercase tracking-[0.12em]",
             showHold || sealed
               ? "text-danger-foreground"
               : canSeal

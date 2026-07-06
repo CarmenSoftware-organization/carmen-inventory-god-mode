@@ -48,10 +48,10 @@ export function ConfirmDelete({
   return (
     <div className="max-w-2xl">
       <div className="overflow-hidden rounded-md border border-danger-border bg-surface">
-        <div className="flex items-center gap-2 rule-double bg-danger-subtle px-4 py-2.5">
-          <span className="rubric rubric-seal">Armed</span>
+        <div className="flex items-center gap-2 border-b border-border bg-danger-subtle px-4 py-2.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-danger">Armed</span>
           <span aria-hidden="true" className="text-danger-border">/</span>
-          <span className="rubric text-danger-subtle-foreground">Irreversible</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-danger-subtle-foreground">Irreversible</span>
         </div>
 
         <div className="space-y-4 p-4">

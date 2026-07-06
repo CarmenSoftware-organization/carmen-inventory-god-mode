@@ -27,19 +27,11 @@ export function THead({ className, ...props }: React.HTMLAttributes<HTMLTableSec
 }
 
 export function TBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return (
-    <tbody
-      className={cn(
-        "[&_tr]:transition-colors [&_tr]:hover:bg-surface-hover",
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <tbody className={cn(className)} {...props} />;
 }
 
 export function TR({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("border-b border-border", className)} {...props} />;
+  return <tr className={cn("zebra-row border-b border-border", className)} {...props} />;
 }
 
 export function Th({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {

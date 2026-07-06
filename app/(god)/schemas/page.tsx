@@ -39,9 +39,9 @@ export default async function SchemasPage() {
         <section>
           <SectionLabel>All schemas</SectionLabel>
           <div className="overflow-hidden rounded-md border border-border bg-surface">
-            <div className="rule-double flex items-center justify-between px-4 py-2">
-              <span className="rubric">Schema</span>
-              <span className="rubric">Open</span>
+            <div className="flex items-center justify-between border-b border-border px-4 py-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">Schema</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">Open</span>
             </div>
             <ul>
               {sel.allSchemas.map((s) => (
