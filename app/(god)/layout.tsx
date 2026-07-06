@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SignOut } from "@phosphor-icons/react/dist/ssr";
+import { LogOut } from "lucide-react";
 import { logout } from "@/server/auth";
 import { NavLink } from "@/components/nav-link";
 import { dbTarget } from "@/lib/db-target";
@@ -63,7 +63,7 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
               type="submit"
               className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground"
             >
-              <SignOut className="h-4 w-4" aria-hidden="true" />
+              <LogOut className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Log out</span>
             </button>
           </form>

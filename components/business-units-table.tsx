@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Trash, ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { Trash2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { BusinessUnit } from "@/lib/registry";
 import { Table, THead, TBody, TR, Th, Td } from "@/components/ui/table";
@@ -52,7 +52,7 @@ export function BusinessUnitsTable({
           </span>
           <Link href={batchHref}>
             <Button variant="danger" size="sm">
-              <Trash className="h-3.5 w-3.5" aria-hidden="true" />
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               Delete {selected.size}
             </Button>
           </Link>
@@ -124,7 +124,7 @@ export function BusinessUnitsTable({
                         href={`/${encodeURIComponent(system)}/tb_business_unit/delete?pk=${encodeURIComponent(JSON.stringify({ id: b.id }))}`}
                       >
                         <Button variant="danger-ghost" size="sm">
-                          <Trash className="h-3.5 w-3.5" aria-hidden="true" />
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           <span className="sr-only sm:not-sr-only">Delete</span>
                         </Button>
                       </Link>

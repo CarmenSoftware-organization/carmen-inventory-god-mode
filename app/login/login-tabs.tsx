@@ -1,6 +1,6 @@
 "use client";
 import { useActionState, useState } from "react";
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight } from "lucide-react";
 import { login, gatewayLogin } from "@/server/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

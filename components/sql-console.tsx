@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Play, CheckCircle } from "@phosphor-icons/react/dist/ssr";
+import { Play, CheckCircle2 } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql as sqlLang } from "@codemirror/lang-sql";
 import { runSql, applySql } from "@/server/sql";
@@ -62,7 +62,7 @@ export function SqlConsole({ schema }: { schema: string }) {
             variant="danger"
             size="sm"
           >
-            <CheckCircle className="h-3.5 w-3.5" aria-hidden="true" />
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
             Commit ({affected} rows)
           </Button>
         )}

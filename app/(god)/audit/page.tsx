@@ -1,4 +1,4 @@
-import { Funnel } from "@phosphor-icons/react/dist/ssr";
+import { Filter } from "lucide-react";
 import { listAudit, type Operation } from "@/lib/audit";
 import { Table, THead, TBody, TR, Th, Td } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -72,7 +72,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           ))}
         </select>
         <Button type="submit" variant="primary" size="md">
-          <Funnel className="h-3.5 w-3.5" aria-hidden="true" />
+          <Filter className="h-3.5 w-3.5" aria-hidden="true" />
           Filter
         </Button>
       </form>

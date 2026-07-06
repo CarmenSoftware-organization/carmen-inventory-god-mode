@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { ChevronRight } from "lucide-react";
 import { BusinessUnitsTable } from "@/components/business-units-table";
 import { listBusinessUnits, listSelectableSchemas } from "@/lib/registry";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ export default async function SchemasPage() {
           <SectionLabel>System</SectionLabel>
           <Link href={`/${encodeURIComponent(sel.system)}/tables`}>
             <Button variant="outline" size="sm">
-              <CaretRight className="h-3.5 w-3.5" aria-hidden="true" />
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
               Manage {sel.system} (registry, users, business units)
             </Button>
           </Link>
@@ -51,7 +51,7 @@ export default async function SchemasPage() {
                     className="flex items-center justify-between gap-2 px-4 py-2.5 transition-colors hover:bg-surface-hover"
                   >
                     <span className="truncate font-mono text-[13px] text-foreground">{s}</span>
-                    <CaretRight className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" aria-hidden="true" />
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" aria-hidden="true" />
                   </Link>
                 </li>
               ))}

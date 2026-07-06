@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Warning, XCircle } from "@phosphor-icons/react/dist/ssr";
+import { TriangleAlert, CircleX } from "lucide-react";
 import { useOperationStream } from "@/components/use-operation-stream";
 import { OperationProgress } from "@/components/operation-progress";
 import { OperationLog } from "@/components/operation-log";
@@ -89,7 +89,7 @@ export function PlatformMigrations({
     <div className="space-y-4">
       {/* Target info */}
       <div className="flex items-center gap-2 rounded-md border border-warning-border bg-warning-subtle px-3 py-2 text-sm text-warning-subtle-foreground">
-        <Warning className="h-4 w-4 shrink-0" aria-hidden="true" weight="fill" />
+        <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span>
           Target:{" "}
           <code className="font-mono">{target.masked}</code>{" "}
@@ -250,7 +250,7 @@ export function PlatformMigrations({
             onChange={(e) => setDestroyChecked(e.target.checked)}
           />
           <span>
-            <XCircle className="mr-1.5 inline h-4 w-4" aria-hidden="true" weight="fill" />
+            <CircleX className="mr-1.5 inline h-4 w-4" aria-hidden="true" />
             I understand this destroys data
           </span>
         </label>

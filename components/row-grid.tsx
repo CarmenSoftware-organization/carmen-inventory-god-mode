@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { PencilSimple, Trash } from "@phosphor-icons/react/dist/ssr";
+import { Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { RowPage } from "@/lib/rows";
 import { Table, THead, TBody, TR, Th, Td } from "@/components/ui/table";
@@ -53,7 +53,7 @@ export function RowGrid({ schema, table, page }: { schema: string; table: string
           </span>
           <Link href={batchHref}>
             <Button variant="danger" size="sm">
-              <Trash className="h-3.5 w-3.5" aria-hidden="true" />
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               Delete {selected.size}
             </Button>
           </Link>
@@ -125,7 +125,7 @@ export function RowGrid({ schema, table, page }: { schema: string; table: string
                         href={`/${encodeURIComponent(schema)}/${encodeURIComponent(table)}/edit?pk=${encodeURIComponent(JSON.stringify(pk(row, page.primaryKey)))}`}
                         className="inline-flex items-center gap-1 text-sm font-medium text-link hover:text-link-hover"
                       >
-                        <PencilSimple className="h-3.5 w-3.5" aria-hidden="true" />
+                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                         <span className="sr-only sm:not-sr-only">edit</span>
                       </Link>
                       {" "}
@@ -133,7 +133,7 @@ export function RowGrid({ schema, table, page }: { schema: string; table: string
                         href={`/${encodeURIComponent(schema)}/${encodeURIComponent(table)}/delete?pk=${encodeURIComponent(JSON.stringify(pk(row, page.primaryKey)))}`}
                         className="inline-flex items-center gap-1 text-sm font-medium text-danger hover:text-danger-hover"
                       >
-                        <Trash className="h-3.5 w-3.5" aria-hidden="true" />
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                         <span className="sr-only sm:not-sr-only">delete</span>
                       </Link>
                     </Td>

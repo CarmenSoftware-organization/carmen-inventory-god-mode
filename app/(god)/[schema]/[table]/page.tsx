@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, TerminalWindow } from "@phosphor-icons/react/dist/ssr";
+import { Plus, SquareTerminal } from "lucide-react";
 import { readRows } from "@/lib/rows";
 import { RowGrid } from "@/components/row-grid";
 import { SchemaBanner } from "@/components/schema-banner";
@@ -34,7 +34,7 @@ export default async function TablePage({
         )}
         <Link href={`/${encodeURIComponent(schema)}/sql`} className="ml-auto">
           <Button variant="ghost" size="sm">
-            <TerminalWindow className="h-3.5 w-3.5" aria-hidden="true" />
+            <SquareTerminal className="h-3.5 w-3.5" aria-hidden="true" />
             SQL console
           </Button>
         </Link>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { ChevronRight } from "lucide-react";
 import { listTables } from "@/lib/introspect";
 import { SchemaBanner } from "@/components/schema-banner";
 import { Table, THead, TBody, TR, Th, Td } from "@/components/ui/table";
@@ -31,7 +31,7 @@ export default async function TablesPage({ params }: { params: Promise<{ schema:
                   className="inline-flex items-center gap-1 font-mono text-xs text-link hover:text-link-hover"
                 >
                   {t.name}
-                  <CaretRight className="h-3 w-3" aria-hidden="true" />
+                  <ChevronRight className="h-3 w-3" aria-hidden="true" />
                 </Link>
               </Td>
               <Td className="text-right tabular-nums text-xs">

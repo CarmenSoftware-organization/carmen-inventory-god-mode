@@ -1,14 +1,14 @@
 import {
   Table as TableIcon,
-  MagnifyingGlass,
+  Search,
   Package,
-} from "@phosphor-icons/react/dist/ssr";
-import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const icons = {
   table: TableIcon,
-  search: MagnifyingGlass,
+  search: Search,
   package: Package,
 } as const;
 
@@ -29,7 +29,7 @@ export function EmptyState({
   hint?: string;
   className?: string;
 }) {
-  const Icon: PhosphorIcon = icons[icon];
+  const Icon: LucideIcon = icons[icon];
   return (
     <div
       className={cn(

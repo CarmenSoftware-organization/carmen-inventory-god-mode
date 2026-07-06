@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { Check } from "@phosphor-icons/react/dist/ssr";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export type CheckboxProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">;
@@ -32,7 +32,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
           "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring",
         )}
       >
-        <Check className="h-3 w-3 font-bold" weight="bold" />
+        <Check className="h-3 w-3 font-bold" />
       </span>
     </span>
   );

@@ -2,12 +2,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  PencilSimple,
-  Trash,
-  ArrowCounterClockwise,
-  Prohibit,
+  Pencil,
+  Trash2,
+  RotateCcw,
+  Ban,
   Plus,
-} from "@phosphor-icons/react/dist/ssr";
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Cluster } from "@/lib/registry";
 import { Tabs } from "@/components/ui/tabs";
@@ -83,7 +83,7 @@ export function ClustersTable({
             <form action={softDeleteAction}>
               <input type="hidden" name="pks" value={JSON.stringify(selectedPks)} />
               <Button variant="warning" size="sm" type="submit">
-                <Prohibit className="h-3.5 w-3.5" aria-hidden="true" />
+                <Ban className="h-3.5 w-3.5" aria-hidden="true" />
                 Soft delete {selected.size}
               </Button>
             </form>
@@ -97,13 +97,13 @@ export function ClustersTable({
           <form action={restoreAction}>
             <input type="hidden" name="pks" value={JSON.stringify(selectedPks)} />
             <Button variant="success" size="sm" type="submit">
-              <ArrowCounterClockwise className="h-3.5 w-3.5" aria-hidden="true" />
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               Restore {selected.size}
             </Button>
           </form>
           <Link href={batchDeleteHref}>
             <Button variant="danger" size="sm">
-              <Trash className="h-3.5 w-3.5" aria-hidden="true" />
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               Hard delete {selected.size}
             </Button>
           </Link>
@@ -174,7 +174,7 @@ export function ClustersTable({
                       <div className="flex items-center justify-end gap-2">
                         <Link href={`/clusters/${encodeURIComponent(c.id)}/edit`}>
                           <Button variant="ghost" size="sm">
-                            <PencilSimple className="h-3.5 w-3.5" aria-hidden="true" />
+                            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                             <span className="sr-only sm:not-sr-only">Edit</span>
                           </Button>
                         </Link>
@@ -185,7 +185,7 @@ export function ClustersTable({
                             value={JSON.stringify([{ id: c.id }])}
                           />
                           <Button variant="danger-ghost" size="sm" type="submit">
-                            <Prohibit className="h-3.5 w-3.5" aria-hidden="true" />
+                            <Ban className="h-3.5 w-3.5" aria-hidden="true" />
                             <span className="sr-only sm:not-sr-only">Soft delete</span>
                           </Button>
                         </form>
@@ -199,7 +199,7 @@ export function ClustersTable({
                             value={JSON.stringify([{ id: c.id }])}
                           />
                           <Button variant="ghost" size="sm" type="submit">
-                            <ArrowCounterClockwise className="h-3.5 w-3.5" aria-hidden="true" />
+                            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                             <span className="sr-only sm:not-sr-only">Restore</span>
                           </Button>
                         </form>
@@ -207,7 +207,7 @@ export function ClustersTable({
                           href={`/${encodeURIComponent(system)}/tb_cluster/delete?pk=${encodeURIComponent(JSON.stringify({ id: c.id }))}`}
                         >
                           <Button variant="danger-ghost" size="sm">
-                            <Trash className="h-3.5 w-3.5" aria-hidden="true" />
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                             <span className="sr-only sm:not-sr-only">Hard delete</span>
                           </Button>
                         </Link>
