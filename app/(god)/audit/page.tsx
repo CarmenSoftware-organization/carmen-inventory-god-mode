@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { Filter } from "lucide-react";
-import { listAudit, type Operation } from "@/lib/audit";
+import { listAuditPage, type Operation } from "@/lib/audit";
 import { Table, THead, TBody, TR, Th, Td } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,14 +30,23 @@ function opVariant(op: Operation) {
   }
 }
 
-export default async function AuditPage({ searchParams }: { searchParams: Promise<{ schema?: string; table?: string; operation?: string }> }) {
+export default async function AuditPage({ searchParams }: { searchParams: Promise<{ schema?: string; table?: string; operation?: string; cursor?: string }> }) {
   const sp = await searchParams;
-  const entries = await listAudit({
+  const { entries, nextCursor } = await listAuditPage({
     schema: sp.schema,
     table: sp.table,
     operation: sp.operation as Operation | undefined,
-    limit: 200,
+    cursor: sp.cursor,
+    limit: 50,
   });
+
+  // Next-page link keeps the active filters and swaps in the new cursor.
+  const nextParams = new URLSearchParams();
+  if (sp.schema) nextParams.set("schema", sp.schema);
+  if (sp.table) nextParams.set("table", sp.table);
+  if (sp.operation) nextParams.set("operation", sp.operation);
+  if (nextCursor) nextParams.set("cursor", nextCursor);
+  const nextHref = `/audit?${nextParams.toString()}`;
 
   return (
     <div className="space-y-4">
@@ -81,7 +91,6 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       <Table>
         <THead>
           <TR>
-            <Th className="text-right">#</Th>
             <Th>At</Th>
             <Th>Actor</Th>
             <Th>Target</Th>
@@ -93,7 +102,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         <TBody>
           {entries.length === 0 ? (
             <tr>
-              <td colSpan={7}>
+              <td colSpan={6}>
                 <EmptyState
                   icon="search"
                   title="No audit entries"
@@ -102,11 +111,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
               </td>
             </tr>
           ) : (
-            entries.map((e, i) => (
+            entries.map((e) => (
               <TR key={e.id} className="align-top">
-                <Td className="text-right font-mono text-xs tabular-nums text-foreground-subtle">
-                  {String(entries.length - i).padStart(3, "0")}
-                </Td>
                 <Td className="whitespace-nowrap font-mono text-xs text-foreground-muted">
                   {e.at}
                 </Td>
@@ -150,6 +156,19 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           )}
         </TBody>
       </Table>
+
+      {/* Pagination — forward-only, matches the rows browser */}
+      {nextCursor && (
+        <div className="flex items-center">
+          <Link
+            href={nextHref}
+            className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+          >
+            Next page
+            <span aria-hidden="true">&rarr;</span>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
