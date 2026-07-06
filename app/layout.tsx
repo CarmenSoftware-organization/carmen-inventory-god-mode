@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Inter, IBM_Plex_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-// Sans + display: one grotesque, matching carmen-platform.
+// Sans + display (theme --font-sans).
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -10,9 +10,9 @@ const inter = Inter({
   display: "swap",
 });
 
-// Data: IDs, timestamps, byte sizes, SQL. Kept from the prior design.
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
+// Data: IDs, timestamps, byte sizes, SQL (theme --font-mono).
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
@@ -46,7 +46,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

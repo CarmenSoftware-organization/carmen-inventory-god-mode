@@ -84,7 +84,7 @@ export function Sidebar({ items = NAV }: { items?: NavItem[] }) {
       {/* Desktop rail */}
       <aside
         className={cn(
-          "hidden shrink-0 flex-col border-r border-border bg-surface md:flex",
+          "hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex",
           "transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
           collapsed ? "w-16" : "w-60",
         )}
@@ -116,7 +116,7 @@ export function Sidebar({ items = NAV }: { items?: NavItem[] }) {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} aria-hidden="true" />
-          <div className="absolute left-0 top-0 flex h-full w-64 flex-col border-r border-border bg-surface">
+          <div className="absolute left-0 top-0 flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
             <div className="flex items-center justify-between">
               <Brand collapsed={false} />
               <button

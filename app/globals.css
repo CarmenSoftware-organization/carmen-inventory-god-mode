@@ -1,46 +1,101 @@
 @import "tailwindcss";
 
+/*
+ * Class-based dark mode (a pre-paint script sets `class="dark"` on <html>).
+ * `:where(.dark, .dark *)` keeps the dark variant at zero specificity and also
+ * matches the `.dark` element itself.
+ */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ------------------------------------------------------------------ */
-/*  Design tokens — carmen-platform-aligned palette.                   */
-/*  Token NAMES are frozen (components consume them); values track     */
-/*  carmen-platform/src/index.css. Extra subtle/hover/strong variants  */
-/*  are derived along the same hue. Colour semantics: accent = blue    */
-/*  primary action; danger/warning/success/info = state.               */
+/*  Palette — shadcn "warm" oklch theme (terracotta primary) + a       */
+/*  god-mode ADAPTER LAYER that maps the app's existing token names     */
+/*  (surface / foreground-muted / accent / danger / seal / …) onto the  */
+/*  theme so every component keeps working unchanged.                   */
+/*                                                                      */
+/*  warning / success / info are NOT part of this shadcn theme, so the  */
+/*  app's own AA-tuned state families are retained (both themes).       */
+/*  Pure `var()`/`color-mix()` adapters are declared once in :root and  */
+/*  follow light/dark automatically; only hard-coded values repeat.     */
 /* ------------------------------------------------------------------ */
 
 :root {
-  --background: hsl(226 20% 98%);
-  --surface: hsl(0 0% 100%);
-  --surface-hover: hsl(226 15% 94%);
-  --surface-muted: hsl(226 15% 95%);
-  --foreground: hsl(226 30% 10%);
-  --foreground-muted: hsl(226 10% 46%);
-  --foreground-subtle: hsl(226 8% 60%);
-  --border: hsl(226 15% 90%);
-  --border-strong: hsl(226 15% 80%);
-  --ring: hsl(221 61% 48%);
+  /* --- theme base (shadcn) --- */
+  --background: oklch(0.9383 0.0042 236.4993);
+  --foreground: oklch(0.3211 0 0);
+  --card: oklch(1.0000 0 0);
+  --card-foreground: oklch(0.3211 0 0);
+  --popover: oklch(1.0000 0 0);
+  --popover-foreground: oklch(0.3211 0 0);
+  --primary: oklch(0.6397 0.1720 36.4421);
+  --primary-foreground: oklch(1.0000 0 0);
+  --secondary: oklch(0.9670 0.0029 264.5419);
+  --secondary-foreground: oklch(0.4461 0.0263 256.8018);
+  --muted: oklch(0.9846 0.0017 247.8389);
+  --muted-foreground: oklch(0.5510 0.0234 264.3637);
+  --destructive: oklch(0.6368 0.2078 25.3313);
+  --destructive-foreground: oklch(1.0000 0 0);
+  --border: oklch(0.9022 0.0052 247.8822);
+  --input: oklch(0.9700 0.0029 264.5420);
+  --ring: oklch(0.6397 0.1720 36.4421);
+  --chart-1: oklch(0.7156 0.0605 248.6845);
+  --chart-2: oklch(0.7875 0.0917 35.9616);
+  --chart-3: oklch(0.5778 0.0759 254.1573);
+  --chart-4: oklch(0.5016 0.0849 259.4902);
+  --chart-5: oklch(0.4241 0.0952 264.0306);
+  --sidebar: oklch(0.9030 0.0046 258.3257);
+  --sidebar-foreground: oklch(0.3211 0 0);
+  --sidebar-primary: oklch(0.6397 0.1720 36.4421);
+  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-accent: oklch(0.9119 0.0222 243.8174);
+  --sidebar-accent-foreground: oklch(0.3791 0.1378 265.5222);
+  --sidebar-border: oklch(0.9276 0.0058 264.5313);
+  --sidebar-ring: oklch(0.6397 0.1720 36.4421);
+  --radius: 0.75rem;
+  --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow-md: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 2px 4px -1px hsl(0 0% 0% / 0.10);
+  --shadow-lg: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 4px 6px -1px hsl(0 0% 0% / 0.10);
+  --shadow-xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 8px 10px -1px hsl(0 0% 0% / 0.10);
+  --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.25);
 
-  --accent: hsl(221 61% 48%);
-  --accent-hover: hsl(221 61% 42%);
-  --accent-foreground: hsl(0 0% 100%);
+  /* Fonts are loaded via next/font in app/layout.tsx; wire their vars here. */
+  --font-sans: var(--font-inter), "Inter", sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
 
-  --link: hsl(221 61% 48%);
-  --link-hover: hsl(221 61% 40%);
+  /* --- god-mode adapter (name → theme; declared once, follow dark) --- */
+  --surface: var(--card);
+  --surface-hover: var(--secondary);
+  --surface-muted: var(--muted);
+  --foreground-muted: var(--muted-foreground);
+  --foreground-subtle: var(--muted-foreground);
+  --border-strong: color-mix(in oklab, var(--border), var(--foreground) 18%);
 
-  --seal: hsl(0 84% 48%);
-  --seal-hover: hsl(0 84% 40%);
+  /* god-mode's --accent is the PRIMARY ACTION colour (buttons/links), which is
+     the theme's --primary — NOT shadcn's subtle --accent. */
+  --accent: var(--primary);
+  --accent-hover: color-mix(in oklab, var(--primary), black 12%);
+  --accent-foreground: var(--primary-foreground);
 
-  --danger: hsl(0 84% 48%);
-  --danger-hover: hsl(0 84% 40%);
-  --danger-foreground: hsl(0 0% 100%);
+  --link: var(--primary);
+  --link-hover: color-mix(in oklab, var(--primary), black 16%);
+
+  --seal: var(--destructive);
+  --seal-hover: color-mix(in oklab, var(--destructive), black 10%);
+
+  --danger: var(--destructive);
+  --danger-hover: color-mix(in oklab, var(--destructive), black 10%);
+  --danger-foreground: var(--destructive-foreground);
   --danger-subtle: hsl(0 84% 96%);
-  --danger-subtle-foreground: hsl(0 74% 42%);
+  --danger-subtle-foreground: hsl(0 74% 40%);
   --danger-border: hsl(0 70% 88%);
 
+  /* warning / success / info — not in the theme; retained AA-tuned families */
   --warning: hsl(38 92% 45%);
-  --warning-foreground: hsl(38 92% 12%); /* AA deviation: dark text on amber, not platform's white */
+  --warning-foreground: hsl(38 92% 12%);
   --warning-subtle: hsl(38 92% 94%);
   --warning-subtle-foreground: hsl(38 80% 32%);
   --warning-border: hsl(38 80% 82%);
@@ -57,39 +112,43 @@
   --info-subtle-foreground: hsl(221 61% 38%);
   --info-border: hsl(221 50% 85%);
 
-  --target-idle: hsl(226 10% 55%);
-
-  --radius: 0.375rem;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 2px 8px rgba(16, 24, 40, 0.08);
-  --zebra-even: rgba(16, 24, 40, 0.015);
+  --target-idle: var(--muted-foreground);
+  --zebra-even: color-mix(in oklab, var(--foreground) 3%, transparent);
 }
 
 .dark {
-  --background: hsl(224 71% 4%);
-  --surface: hsl(222 47% 11%);
-  --surface-hover: hsl(222 47% 15%);
-  --surface-muted: hsl(222 47% 13%);
-  --foreground: hsl(213 31% 91%);
-  --foreground-muted: hsl(215 16% 60%);
-  --foreground-subtle: hsl(215 14% 50%);
-  --border: hsl(216 34% 17%);
-  --border-strong: hsl(216 34% 24%);
-  --ring: hsl(217 65% 55%);
+  --background: oklch(0.2598 0.0306 262.6666);
+  --foreground: oklch(0.9219 0 0);
+  --card: oklch(0.3106 0.0301 268.6365);
+  --card-foreground: oklch(0.9219 0 0);
+  --popover: oklch(0.2900 0.0249 268.3986);
+  --popover-foreground: oklch(0.9219 0 0);
+  --primary: oklch(0.6397 0.1720 36.4421);
+  --primary-foreground: oklch(1.0000 0 0);
+  --secondary: oklch(0.3095 0.0266 266.7132);
+  --secondary-foreground: oklch(0.9219 0 0);
+  --muted: oklch(0.3095 0.0266 266.7132);
+  --muted-foreground: oklch(0.7155 0 0);
+  --destructive: oklch(0.6368 0.2078 25.3313);
+  --destructive-foreground: oklch(1.0000 0 0);
+  --border: oklch(0.3843 0.0301 269.7337);
+  --input: oklch(0.3843 0.0301 269.7337);
+  --ring: oklch(0.6397 0.1720 36.4421);
+  --chart-1: oklch(0.7156 0.0605 248.6845);
+  --chart-2: oklch(0.7693 0.0876 34.1875);
+  --chart-3: oklch(0.5778 0.0759 254.1573);
+  --chart-4: oklch(0.5016 0.0849 259.4902);
+  --chart-5: oklch(0.4241 0.0952 264.0306);
+  --sidebar: oklch(0.3100 0.0283 267.7408);
+  --sidebar-foreground: oklch(0.9219 0 0);
+  --sidebar-primary: oklch(0.6397 0.1720 36.4421);
+  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-accent: oklch(0.3380 0.0589 267.5867);
+  --sidebar-accent-foreground: oklch(0.8823 0.0571 254.1284);
+  --sidebar-border: oklch(0.3843 0.0301 269.7337);
+  --sidebar-ring: oklch(0.6397 0.1720 36.4421);
 
-  --accent: hsl(217 65% 55%);
-  --accent-hover: hsl(217 65% 62%);
-  --accent-foreground: hsl(0 0% 100%);
-
-  --link: hsl(217 65% 68%);
-  --link-hover: hsl(217 65% 76%);
-
-  --seal: hsl(0 62% 51%);
-  --seal-hover: hsl(0 62% 58%);
-
-  --danger: hsl(0 62% 51%);
-  --danger-hover: hsl(0 62% 58%);
-  --danger-foreground: hsl(0 0% 100%);
+  /* state families — dark */
   --danger-subtle: hsl(0 40% 15%);
   --danger-subtle-foreground: hsl(0 70% 80%);
   --danger-border: hsl(0 40% 30%);
@@ -112,24 +171,49 @@
   --info-subtle-foreground: hsl(217 70% 78%);
   --info-border: hsl(217 45% 30%);
 
-  --target-idle: hsl(215 14% 50%);
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --zebra-even: rgba(255, 255, 255, 0.015);
+  --zebra-even: color-mix(in oklab, var(--foreground) 4%, transparent);
 }
 
 @theme inline {
+  /* shadcn names (available for new code) */
   --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* god-mode names (what every existing component consumes) */
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
   --color-surface-muted: var(--surface-muted);
-  --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
   --color-foreground-subtle: var(--foreground-subtle);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
-  --color-ring: var(--ring);
 
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
@@ -167,20 +251,31 @@
   --color-seal-hover: var(--seal-hover);
   --color-target-idle: var(--target-idle);
 
-  --radius-md: var(--radius);
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-lg: calc(var(--radius) + 2px);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+  --font-display: var(--font-sans);
 
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-plex-mono);
-  --font-display: var(--font-inter);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
 }
 
 @layer base {
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
     font-feature-settings: "rlig" 1, "calt" 1;
     line-height: 1.5;
   }
@@ -190,6 +285,7 @@
     outline-offset: 2px;
   }
 
+  /* Tactile press feedback (functional motion only). */
   @media (prefers-reduced-motion: no-preference) {
     button:active:not(:disabled),
     a:active,
@@ -198,20 +294,25 @@
     }
   }
 
+  /* Page-load motion. Reduced-motion-safe. */
   @media (prefers-reduced-motion: no-preference) {
     main {
       animation: page-in 220ms ease-out both;
     }
     @keyframes page-in {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: none; }
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
     }
   }
 }
 
-/* ------------------------------------------------------------------ */
-/*  Table striping — ported from carmen-platform.                      */
-/* ------------------------------------------------------------------ */
+/* Table striping. */
 @layer components {
   .zebra-row {
     transition: background-color 150ms ease, box-shadow 150ms ease;
