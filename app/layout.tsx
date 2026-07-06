@@ -24,13 +24,15 @@ export const metadata: Metadata = {
 };
 
 // Apply the dark class before paint to avoid a flash of the wrong theme.
-// Respects prefers-color-scheme; no manual toggle (per plan, no extra dep).
+// Honours a stored localStorage["theme"] choice (light/dark/system), falling
+// back to prefers-color-scheme when unset or set to "system".
 const themeScript = `
 (function () {
   try {
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      document.documentElement.classList.add("dark");
-    }
+    var pref = localStorage.getItem("theme");
+    var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var dark = pref === "dark" || ((pref === "system" || !pref) && systemDark);
+    if (dark) document.documentElement.classList.add("dark");
   } catch (e) {}
 })();
 `;
