@@ -1,13 +1,35 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { PanelLeftClose, PanelLeft, LogOut, Menu, X, type LucideIcon } from "lucide-react";
+import {
+  PanelLeftClose,
+  PanelLeft,
+  LogOut,
+  Menu,
+  X,
+  Database,
+  Boxes,
+  ScrollText,
+  GitBranch,
+  type LucideIcon,
+} from "lucide-react";
 import { logout } from "@/server/auth";
 import { NavLink } from "@/components/nav-link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/cn";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon };
+
+// The nav lives here (a client module) so the lucide icon components are never
+// passed as props across the Server→Client boundary — a Server Component that
+// hands an icon component to this client Sidebar trips React's "only plain
+// objects can be passed to Client Components" serialization error.
+const NAV: NavItem[] = [
+  { href: "/schemas", label: "Schemas", icon: Database },
+  { href: "/clusters", label: "Clusters", icon: Boxes },
+  { href: "/audit", label: "Audit", icon: ScrollText },
+  { href: "/platform-migrations", label: "Migrations", icon: GitBranch },
+];
 
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
@@ -53,7 +75,7 @@ function Footer({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-export function Sidebar({ items }: { items: NavItem[] }) {
+export function Sidebar({ items = NAV }: { items?: NavItem[] }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
