@@ -186,7 +186,7 @@ export function ClustersTable({
                           />
                           <Button variant="danger-ghost" size="sm" type="submit">
                             <Ban className="h-3.5 w-3.5" aria-hidden="true" />
-                            <span className="sr-only sm:not-sr-only">Soft delete</span>
+                            <span className="sr-only sm:not-sr-only !whitespace-nowrap">Soft delete</span>
                           </Button>
                         </form>
                       </div>
@@ -208,7 +208,7 @@ export function ClustersTable({
                         >
                           <Button variant="danger-ghost" size="sm">
                             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                            <span className="sr-only sm:not-sr-only">Hard delete</span>
+                            <span className="sr-only sm:not-sr-only !whitespace-nowrap">Hard delete</span>
                           </Button>
                         </Link>
                       </div>
