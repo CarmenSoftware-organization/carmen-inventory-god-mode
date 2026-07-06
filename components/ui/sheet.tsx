@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -31,7 +32,10 @@ export function Sheet({
 
   if (!open) return null;
 
-  return (
+  // Portal to <body> so the fixed overlay escapes any transformed/animated
+  // ancestor (e.g. `main`'s page-in animation creates a containing block) and
+  // pins to the real viewport edges — flush right against the window.
+  return createPortal(
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div
@@ -53,6 +57,7 @@ export function Sheet({
         </div>
         <div className="flex-1 overflow-y-auto px-4 py-3">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
