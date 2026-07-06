@@ -29,11 +29,11 @@
   --link: hsl(221 61% 48%);
   --link-hover: hsl(221 61% 40%);
 
-  --seal: hsl(0 84% 60%);
-  --seal-hover: hsl(0 84% 52%);
+  --seal: hsl(0 84% 48%);
+  --seal-hover: hsl(0 84% 40%);
 
-  --danger: hsl(0 84% 60%);
-  --danger-hover: hsl(0 84% 52%);
+  --danger: hsl(0 84% 48%);
+  --danger-hover: hsl(0 84% 40%);
   --danger-foreground: hsl(0 0% 100%);
   --danger-subtle: hsl(0 84% 96%);
   --danger-subtle-foreground: hsl(0 74% 42%);
@@ -84,11 +84,11 @@
   --link: hsl(217 65% 68%);
   --link-hover: hsl(217 65% 76%);
 
-  --seal: hsl(0 62% 55%);
-  --seal-hover: hsl(0 62% 62%);
+  --seal: hsl(0 62% 51%);
+  --seal-hover: hsl(0 62% 58%);
 
-  --danger: hsl(0 62% 55%);
-  --danger-hover: hsl(0 62% 62%);
+  --danger: hsl(0 62% 51%);
+  --danger-hover: hsl(0 62% 58%);
   --danger-foreground: hsl(0 0% 100%);
   --danger-subtle: hsl(0 40% 15%);
   --danger-subtle-foreground: hsl(0 70% 80%);

@@ -41,7 +41,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">The Record</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">Audit</p>
         <h1 className="text-2xl font-medium tracking-tight">Audit log</h1>
       </div>
 
