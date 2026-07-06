@@ -41,18 +41,35 @@ export default async function SchemasPage() {
           <div className="overflow-hidden rounded-md border border-border bg-surface">
             <div className="flex items-center justify-between border-b border-border px-4 py-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">Schema</span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">Open</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">Actions</span>
             </div>
             <ul>
               {sel.allSchemas.map((s) => (
-                <li key={s} className="border-b border-border last:border-0">
+                <li
+                  key={s}
+                  className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5 transition-colors last:border-0 hover:bg-surface-hover"
+                >
                   <Link
                     href={`/${encodeURIComponent(s)}/tables`}
-                    className="flex items-center justify-between gap-2 px-4 py-2.5 transition-colors hover:bg-surface-hover"
+                    className="flex min-w-0 flex-1 items-center gap-2"
                   >
                     <span className="truncate font-mono text-[13px] text-foreground">{s}</span>
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" aria-hidden="true" />
                   </Link>
+                  <div className="flex shrink-0 items-center gap-4">
+                    {s === sel.system ? (
+                      <span className="text-xs font-medium uppercase tracking-wider text-foreground-subtle">
+                        Protected
+                      </span>
+                    ) : (
+                      <Link
+                        href={`/schemas/${encodeURIComponent(s)}/delete`}
+                        className="text-xs font-semibold uppercase tracking-wider text-danger transition-colors hover:text-danger-hover"
+                      >
+                        Delete
+                      </Link>
+                    )}
+                    <ChevronRight className="h-3.5 w-3.5 text-foreground-subtle" aria-hidden="true" />
+                  </div>
                 </li>
               ))}
             </ul>
