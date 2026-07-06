@@ -39,6 +39,7 @@ function Footer({ collapsed }: { collapsed: boolean }) {
       <form action={logout}>
         <button
           type="submit"
+          aria-label={collapsed ? "Log out" : undefined}
           className={cn(
             "inline-flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground",
             collapsed && "justify-center px-2",
