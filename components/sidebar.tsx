@@ -46,7 +46,7 @@ function Brand({ collapsed }: { collapsed: boolean }) {
 
 function Rail({ items, collapsed }: { items: NavItem[]; collapsed: boolean }) {
   return (
-    <nav className="flex flex-1 flex-col gap-1 px-2" aria-label="Primary">
+    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2" aria-label="Primary">
       {items.map((it) => (
         <NavLink key={it.href} href={it.href} label={it.label} icon={it.icon} collapsed={collapsed} />
       ))}
