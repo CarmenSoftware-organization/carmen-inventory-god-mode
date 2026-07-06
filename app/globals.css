@@ -1,130 +1,124 @@
 @import "tailwindcss";
 
-/*
- * Class-based dark mode that ALSO respects system preference.
- *
- * Strategy: set `class="dark"` on <html> when the OS prefers dark. A small
- * inline script in the root layout does this before paint (no flash). We use
- * a `dark` class variant so component utilities stay explicit and auditable.
- */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ------------------------------------------------------------------ */
-/*  Design tokens — "The Register of Carmen" (ledger)                  */
-/*                                                                    */
-/*  Off-black / off-white only (no pure #000 / #fff, per a11y rule).  */
-/*  Warm, organized palette like aged paper in a leather-bound ledger. */
-/*  Chrome stays monochrome ink; colour reserved for STATE + SEAL.     */
-/*  (danger / warning / success / live target). One restrained        */
-/*  identity hue (register blue) is spent only on navigation links.   */
+/*  Design tokens — carmen-platform-aligned palette.                   */
+/*  Token NAMES are frozen (components consume them); values track     */
+/*  carmen-platform/src/index.css. Extra subtle/hover/strong variants  */
+/*  are derived along the same hue. Colour semantics: accent = blue    */
+/*  primary action; danger/warning/success/info = state.               */
 /* ------------------------------------------------------------------ */
 
 :root {
-  /* Base surfaces + text — "daylight on paper" */
-  --background: #eae8e1; /* oyster paper, cool */
-  --surface: #f5f3ed; /* leaf — cards, tables, inputs */
-  --surface-hover: #edebe3;
-  --surface-muted: #e4e2da;
-  --foreground: #1b2230; /* blue-black ink */
-  --foreground-muted: #565e6e;
-  --foreground-subtle: #5f6674;
-  --border: #cdcabf; /* hairline rule */
-  --border-strong: #b4b0a3;
-  --ring: #1b2230;
+  --background: hsl(226 20% 98%);
+  --surface: hsl(0 0% 100%);
+  --surface-hover: hsl(226 15% 94%);
+  --surface-muted: hsl(226 15% 95%);
+  --foreground: hsl(226 30% 10%);
+  --foreground-muted: hsl(226 10% 46%);
+  --foreground-subtle: hsl(226 8% 60%);
+  --border: hsl(226 15% 90%);
+  --border-strong: hsl(226 15% 80%);
+  --ring: hsl(221 61% 48%);
 
-  /* Primary action = ink */
-  --accent: #1b2230;
-  --accent-hover: #2c3446;
-  --accent-foreground: #f5f3ed;
+  --accent: hsl(221 61% 48%);
+  --accent-hover: hsl(221 61% 42%);
+  --accent-foreground: hsl(0 0% 100%);
 
-  /* Link — register blue, underline-first */
-  --link: #2c4a7c;
-  --link-hover: #1e3560;
+  --link: hsl(221 61% 48%);
+  --link-hover: hsl(221 61% 40%);
 
-  /* Signature: the seal (also the danger family) */
-  --seal: #b23a2e; /* oxblood */
-  --seal-hover: #9a3227;
+  --seal: hsl(0 84% 60%);
+  --seal-hover: hsl(0 84% 52%);
 
-  --danger: #b23a2e;
-  --danger-hover: #9a3227;
-  --danger-foreground: #f5f3ed;
-  --danger-subtle: #f6e9e5;
-  --danger-subtle-foreground: #8a2c22; /* small danger TEXT uses this */
-  --danger-border: #e4c3bc;
+  --danger: hsl(0 84% 60%);
+  --danger-hover: hsl(0 84% 52%);
+  --danger-foreground: hsl(0 0% 100%);
+  --danger-subtle: hsl(0 84% 96%);
+  --danger-subtle-foreground: hsl(0 74% 42%);
+  --danger-border: hsl(0 70% 88%);
 
-  --warning: #b07a26; /* aged amber */
-  --warning-foreground: #1b2230;
-  --warning-subtle: #f5edd9;
-  --warning-subtle-foreground: #7a521a;
-  --warning-border: #e4d3a6;
-  --warning-strong: #bd8730;
+  --warning: hsl(38 92% 45%);
+  --warning-foreground: hsl(38 92% 12%); /* AA deviation: dark text on amber, not platform's white */
+  --warning-subtle: hsl(38 92% 94%);
+  --warning-subtle-foreground: hsl(38 80% 32%);
+  --warning-border: hsl(38 80% 82%);
+  --warning-strong: hsl(38 92% 45%);
 
-  --success: #2f5d4e; /* bottle green — committed */
-  --success-hover: #274e41;
-  --success-subtle: #e4ede7;
-  --success-subtle-foreground: #234a3e;
-  --success-border: #bcd1c7;
+  --success: hsl(142 40% 40%);
+  --success-hover: hsl(142 40% 34%);
+  --success-subtle: hsl(142 40% 94%);
+  --success-subtle-foreground: hsl(142 40% 26%);
+  --success-border: hsl(142 30% 80%);
 
-  --info: #2c4a7c;
-  --info-subtle: #e5e9f1;
-  --info-subtle-foreground: #223c66;
-  --info-border: #becbdf;
+  --info: hsl(221 61% 48%);
+  --info-subtle: hsl(221 61% 95%);
+  --info-subtle-foreground: hsl(221 61% 38%);
+  --info-border: hsl(221 50% 85%);
 
-  --target-idle: #7a818e;
+  --target-idle: hsl(226 10% 55%);
+
+  --radius: 0.375rem;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 2px 8px rgba(16, 24, 40, 0.08);
+  --zebra-even: rgba(16, 24, 40, 0.015);
 }
 
 .dark {
-  /* "reading by lamplight" — warm, never blue-black */
-  --background: #181510;
-  --surface: #211e17;
-  --surface-hover: #2a2619;
-  --surface-muted: #1c1a14;
-  --foreground: #ece7da; /* warm parchment */
-  --foreground-muted: #a29b89;
-  --foreground-subtle: #928a78;
-  --border: #332e22;
-  --border-strong: #48412f;
-  --ring: #ece7da;
+  --background: hsl(224 71% 4%);
+  --surface: hsl(222 47% 11%);
+  --surface-hover: hsl(222 47% 15%);
+  --surface-muted: hsl(222 47% 13%);
+  --foreground: hsl(213 31% 91%);
+  --foreground-muted: hsl(215 16% 60%);
+  --foreground-subtle: hsl(215 14% 50%);
+  --border: hsl(216 34% 17%);
+  --border-strong: hsl(216 34% 24%);
+  --ring: hsl(217 65% 55%);
 
-  --accent: #ece7da;
-  --accent-hover: #d8d2c3;
-  --accent-foreground: #181510;
+  --accent: hsl(217 65% 55%);
+  --accent-hover: hsl(217 65% 62%);
+  --accent-foreground: hsl(0 0% 100%);
 
-  --link: #8fa9d8;
-  --link-hover: #abbfe4;
+  --link: hsl(217 65% 68%);
+  --link-hover: hsl(217 65% 76%);
 
-  --seal: #df6559;
-  --seal-hover: #e06b60;
+  --seal: hsl(0 62% 55%);
+  --seal-hover: hsl(0 62% 62%);
 
-  --danger: #df6559;
-  --danger-hover: #e06b60;
-  --danger-foreground: #181510;
-  --danger-subtle: #2e1512;
-  --danger-subtle-foreground: #f0b3ac;
-  --danger-border: #5a241d;
+  --danger: hsl(0 62% 55%);
+  --danger-hover: hsl(0 62% 62%);
+  --danger-foreground: hsl(0 0% 100%);
+  --danger-subtle: hsl(0 40% 15%);
+  --danger-subtle-foreground: hsl(0 70% 80%);
+  --danger-border: hsl(0 40% 30%);
 
-  --warning: #d6a24a;
-  --warning-foreground: #181510;
-  --warning-subtle: #2a2010;
-  --warning-subtle-foreground: #e6c88a;
-  --warning-border: #5a4620;
-  --warning-strong: #d6a24a;
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(38 92% 10%);
+  --warning-subtle: hsl(38 50% 14%);
+  --warning-subtle-foreground: hsl(38 80% 70%);
+  --warning-border: hsl(38 50% 30%);
+  --warning-strong: hsl(38 92% 50%);
 
-  --success: #6fa98c;
-  --success-hover: #83bb9e;
-  --success-subtle: #12241c;
-  --success-subtle-foreground: #a7cfbc;
-  --success-border: #274a3b;
+  --success: hsl(142 40% 45%);
+  --success-hover: hsl(142 40% 52%);
+  --success-subtle: hsl(142 40% 13%);
+  --success-subtle-foreground: hsl(142 40% 72%);
+  --success-border: hsl(142 30% 28%);
 
-  --info: #8fa9d8;
-  --info-subtle: #141c2c;
-  --info-subtle-foreground: #b3c5e6;
-  --info-border: #2a3b5a;
+  --info: hsl(217 65% 55%);
+  --info-subtle: hsl(217 50% 15%);
+  --info-subtle-foreground: hsl(217 70% 78%);
+  --info-border: hsl(217 45% 30%);
 
-  --target-idle: #79725f;
+  --target-idle: hsl(215 14% 50%);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --zebra-even: rgba(255, 255, 255, 0.015);
 }
 
-/* Expose tokens to Tailwind utilities (bg-background, text-foreground, etc.) */
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -173,26 +167,29 @@
   --color-seal-hover: var(--seal-hover);
   --color-target-idle: var(--target-idle);
 
-  --font-sans: var(--font-newsreader);
+  --radius-md: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-lg: calc(var(--radius) + 2px);
+
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-plex-mono);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-inter);
 }
 
 @layer base {
   body {
     background: var(--background);
     color: var(--foreground);
-    /* Use the loaded Newsreader body font. Falls back through system serif. */
-    font-family: var(--font-newsreader), ui-serif, Georgia, serif;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    line-height: 1.5;
   }
 
-  /* Default focus-visible ring: token-driven, visible in both themes. */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 
-  /* Tactile press feedback for interactive controls (functional motion only). */
   @media (prefers-reduced-motion: no-preference) {
     button:active:not(:disabled),
     a:active,
@@ -201,87 +198,28 @@
     }
   }
 
-  /* Page-load motion: the folio settles into place. Reduced-motion-safe. */
   @media (prefers-reduced-motion: no-preference) {
     main {
-      animation: folio-in 260ms ease-out both;
+      animation: page-in 220ms ease-out both;
     }
-    @keyframes folio-in {
-      from {
-        opacity: 0;
-        transform: translateY(4px);
-      }
-      to {
-        opacity: 1;
-        transform: none;
-      }
+    @keyframes page-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: none; }
     }
   }
 }
 
 /* ------------------------------------------------------------------ */
-/*  Identity utilities — the ledger vernacular.                        */
+/*  Table striping — ported from carmen-platform.                      */
 /* ------------------------------------------------------------------ */
 @layer components {
-  /*
-   * Rubric: the red manuscript heading — small, uppercase, widely tracked.
-   * Carries section voice with serif formality.
-   */
-  .rubric {
-    font-family: var(--font-newsreader), ui-serif, Georgia, serif;
-    font-size: 11px;
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--foreground-subtle);
+  .zebra-row {
+    transition: background-color 150ms ease, box-shadow 150ms ease;
   }
-  .rubric-seal {
-    color: var(--seal);
+  .zebra-row:nth-child(even) {
+    background-color: var(--zebra-even);
   }
-
-  /* Double rule — the ledger divider under titles / above totals. */
-  .rule-double {
-    border-bottom: 3px double var(--border-strong);
-  }
-
-  /*
-   * Wax seal — the target-status disc in the masthead. Meaning is carried by
-   * FILL (pressed vs. blank), never motion, so it is reduced-motion-safe.
-   */
-  .seal {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 9999px;
-    border: 1.5px solid var(--border-strong);
-    background: transparent;
-    color: var(--foreground-subtle);
-    font-family: var(--font-newsreader), ui-serif, Georgia, serif;
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .seal[data-live="true"] {
-    border-color: var(--seal);
-    background: var(--seal);
-    color: var(--danger-foreground);
-  }
-
-  /* Stamp mark — the persistent seal glyph beside a sealed audit entry. */
-  .stamp-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1rem;
-    height: 1rem;
-    border-radius: 9999px;
-    border: 1.5px solid var(--seal);
-    color: var(--seal);
-    font-size: 9px;
-    line-height: 1;
+  .zebra-row:hover {
+    background-color: var(--surface-hover);
   }
 }

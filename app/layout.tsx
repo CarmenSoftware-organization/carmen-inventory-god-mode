@@ -1,25 +1,16 @@
 import type { Metadata } from "next";
-import { Fraunces, Newsreader, IBM_Plex_Mono } from "next/font/google";
+import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-// Display: a soft, engraved serif — masthead, folio titles, large numerals.
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+// Sans + display: one grotesque, matching carmen-platform.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  axes: ["opsz"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-// Body / UI: an editorial old-style with tabular figures for ledger data.
-const newsreader = Newsreader({
-  variable: "--font-newsreader",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  axes: ["opsz"],
-  display: "swap",
-});
-
-// Data: IDs, timestamps, byte sizes, SQL. Not a variable font — weights listed.
+// Data: IDs, timestamps, byte sizes, SQL. Kept from the prior design.
 const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
   subsets: ["latin"],
@@ -28,7 +19,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Carmen · The Register",
+  title: "Carmen · God Mode",
   description: "Admin console for inspecting and surgically mutating Carmen inventory data.",
 };
 
@@ -53,7 +44,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${fraunces.variable} ${newsreader.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${plexMono.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
