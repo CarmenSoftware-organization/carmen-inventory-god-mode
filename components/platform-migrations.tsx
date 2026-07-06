@@ -99,6 +99,7 @@ export function PlatformMigrations({
             {isNewSchema && (
               <span className="font-semibold">, NEW</span>
             )}
+            {")"}
           </span>
         </span>
       </div>
