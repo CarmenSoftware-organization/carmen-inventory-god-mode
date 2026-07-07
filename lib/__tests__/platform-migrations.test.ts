@@ -10,6 +10,7 @@ test("catalog exposes the expected operation ids across groups", () => {
     "prisma-status", "prisma-deploy",
     "tenant-apply", "tenant-revert",
     "seed", "seed-permission", "seed-platform-super-admin",
+    "seed-platform-role", "seed-report-template-upload",
     "migrate-reset", "seed-reset",
   ]));
   expect(findOp("prisma-status")?.readonly).toBe(true);

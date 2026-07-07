@@ -37,9 +37,11 @@ export const CATALOG: CatalogOp[] = [
   seed("seed-permission", "db:seed.permission", "Seed: permission catalog"),
   seed("seed-platform-permission", "db:seed.platform-permission", "Seed: platform permissions"),
   seed("seed-role-permission", "db:seed.role-permission", "Seed: role permissions"),
+  seed("seed-platform-role", "db:seed.platform-role", "Seed: platform roles"),
   seed("seed-platform-role-permission", "db:seed.platform-role-permission", "Seed: platform role permissions"),
   seed("seed-platform-super-admin", "db:seed.platform-super-admin", "Seed: platform super admin"),
   seed("seed-report-template", "db:seed.report-template", "Seed: report templates"),
+  seed("seed-report-template-upload", "db:seed.report-template-upload", "Seed: report template uploads"),
 
   { id: "migrate-reset", group: "danger", label: "DANGER: prisma migrate reset (drops & recreates)",
     kind: "script", run: "db:migrate:reset", writes: true, destructive: true },
