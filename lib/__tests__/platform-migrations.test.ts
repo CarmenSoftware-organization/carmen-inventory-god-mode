@@ -11,11 +11,21 @@ test("catalog exposes the expected operation ids across groups", () => {
     "tenant-apply", "tenant-revert",
     "seed", "seed-permission", "seed-platform-super-admin",
     "seed-platform-role", "seed-report-template-upload",
+    "check-permission", "check-platform-permission", "check-platform-role-permission",
     "migrate-reset", "seed-reset",
   ]));
   expect(findOp("prisma-status")?.readonly).toBe(true);
   expect(findOp("prisma-deploy")?.writes).toBe(true);
   expect(findOp("migrate-reset")?.destructive).toBe(true);
+});
+
+test("drift-check ops are read-only (no confirm needed)", () => {
+  const op = findOp("check-permission");
+  expect(op?.group).toBe("check");
+  expect(op?.readonly).toBe(true);
+  expect(op?.writes).toBe(false);
+  expect(op?.destructive).toBe(false);
+  expect(op?.run).toBe("db:check.permission");
 });
 
 test("catalog does not offer ops whose scripts are absent from the package", () => {

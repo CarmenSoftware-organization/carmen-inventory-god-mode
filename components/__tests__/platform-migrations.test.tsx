@@ -50,6 +50,13 @@ test("destructive op also requires the destroy checkbox", () => {
   expect(run).toBeEnabled();
 });
 
+test("drift-check group renders and its read-only op enables Run immediately", () => {
+  render(<PlatformMigrations {...props} />);
+  const op = screen.getByLabelText(/^Check: permission drift$/i);
+  fireEvent.click(op);
+  expect(screen.getByRole("button", { name: /^Run$/i })).toBeEnabled();
+});
+
 test("shows the npm script and .ts file under an op label", () => {
   render(<PlatformMigrations {...props} scriptInfo={{
     "seed-permission": { script: "db:seed.permission", file: "seed.permission.ts", missing: false },

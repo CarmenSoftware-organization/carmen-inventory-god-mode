@@ -16,6 +16,7 @@ const GROUPS: { key: OpGroup; title: string }[] = [
   { key: "prisma", title: "Prisma schema migrations" },
   { key: "tenant", title: "Tenant view migrations (all active BU schemas)" },
   { key: "seed", title: "Seed scripts" },
+  { key: "check", title: "Drift checks (read-only)" },
   { key: "danger", title: "Danger zone: destructive resets" },
 ];
 

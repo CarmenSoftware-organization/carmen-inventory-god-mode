@@ -1,4 +1,4 @@
-export type OpGroup = "prisma" | "tenant" | "seed" | "danger";
+export type OpGroup = "prisma" | "tenant" | "seed" | "check" | "danger";
 
 export type CatalogOp = {
   id: string;
@@ -17,6 +17,10 @@ export type CatalogOp = {
 
 const seed = (id: string, run: string, label: string): CatalogOp => ({
   id, group: "seed", label, kind: "script", run, writes: true, destructive: false,
+});
+
+const check = (id: string, run: string, label: string): CatalogOp => ({
+  id, group: "check", label, kind: "script", run, writes: false, destructive: false, readonly: true,
 });
 
 export const CATALOG: CatalogOp[] = [
@@ -42,6 +46,10 @@ export const CATALOG: CatalogOp[] = [
   seed("seed-platform-super-admin", "db:seed.platform-super-admin", "Seed: platform super admin"),
   seed("seed-report-template", "db:seed.report-template", "Seed: report templates"),
   seed("seed-report-template-upload", "db:seed.report-template-upload", "Seed: report template uploads"),
+
+  check("check-permission", "db:check.permission", "Check: permission drift"),
+  check("check-platform-permission", "db:check.platform-permission", "Check: platform permission drift"),
+  check("check-platform-role-permission", "db:check.platform-role-permission", "Check: platform role-permission drift"),
 
   { id: "migrate-reset", group: "danger", label: "DANGER: prisma migrate reset (drops & recreates)",
     kind: "script", run: "db:migrate:reset", writes: true, destructive: true },
