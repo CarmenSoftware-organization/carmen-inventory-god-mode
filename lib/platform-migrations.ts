@@ -36,7 +36,6 @@ export const CATALOG: CatalogOp[] = [
   seed("seed", "db:seed", "Seed: baseline"),
   seed("seed-permission", "db:seed.permission", "Seed: permission catalog"),
   seed("seed-platform-permission", "db:seed.platform-permission", "Seed: platform permissions"),
-  seed("seed-application", "db:seed.application", "Seed: applications"),
   seed("seed-role-permission", "db:seed.role-permission", "Seed: role permissions"),
   seed("seed-platform-role-permission", "db:seed.platform-role-permission", "Seed: platform role permissions"),
   seed("seed-platform-super-admin", "db:seed.platform-super-admin", "Seed: platform super admin"),
@@ -46,8 +45,6 @@ export const CATALOG: CatalogOp[] = [
     kind: "script", run: "db:migrate:reset", writes: true, destructive: true },
   { id: "seed-reset", group: "danger", label: "DANGER: seed reset (migrate reset + seed)",
     kind: "script", run: "db:seed:reset", writes: true, destructive: true },
-  { id: "mock-reset", group: "danger", label: "DANGER: mock reset (reset + seed + mock)",
-    kind: "script", run: "db:mock:reset", writes: true, destructive: true },
 ];
 
 for (const op of CATALOG) {

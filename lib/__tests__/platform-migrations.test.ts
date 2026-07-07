@@ -10,11 +10,18 @@ test("catalog exposes the expected operation ids across groups", () => {
     "prisma-status", "prisma-deploy",
     "tenant-apply", "tenant-revert",
     "seed", "seed-permission", "seed-platform-super-admin",
-    "migrate-reset", "seed-reset", "mock-reset",
+    "migrate-reset", "seed-reset",
   ]));
   expect(findOp("prisma-status")?.readonly).toBe(true);
   expect(findOp("prisma-deploy")?.writes).toBe(true);
   expect(findOp("migrate-reset")?.destructive).toBe(true);
+});
+
+test("catalog does not offer ops whose scripts are absent from the package", () => {
+  // db:seed.application and db:mock:reset have no npm script (and no .ts file)
+  // in @repo/prisma-shared-schema-platform, so running them can only fail.
+  expect(findOp("seed-application")).toBeUndefined();
+  expect(findOp("mock-reset")).toBeUndefined();
 });
 
 test("findOp returns undefined for unknown ids", () => {
@@ -119,8 +126,8 @@ test("resolveScriptInfo resolves a known script to its .ts file", () => {
 });
 
 test("resolveScriptInfo flags a script missing from the package", () => {
-  const info = resolveScriptInfo(findOp("seed-application")!, {});
-  expect(info).toEqual({ script: "db:seed.application", file: null, missing: true });
+  const info = resolveScriptInfo(findOp("seed-permission")!, { "db:seed": "ts-node prisma/seed.ts" });
+  expect(info).toEqual({ script: "db:seed.permission", file: null, missing: true });
 });
 
 test("resolveScriptInfo does not accuse when scripts are unavailable", () => {

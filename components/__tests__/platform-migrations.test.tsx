@@ -67,7 +67,7 @@ test("shows the script name only when there is no .ts file", () => {
 
 test("flags an op whose script is missing from the package", () => {
   render(<PlatformMigrations {...props} scriptInfo={{
-    "seed-application": { script: "db:seed.application", file: null, missing: true },
+    "seed-permission": { script: "db:seed.permission", file: null, missing: true },
   }} />);
   expect(screen.getByText(/not in package/i)).toBeInTheDocument();
 });
