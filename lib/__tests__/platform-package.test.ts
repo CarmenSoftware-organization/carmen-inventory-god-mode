@@ -71,3 +71,32 @@ test("listTenantFiles returns sorted *.up.sql basenames", async () => {
   const { listTenantFiles } = await import("@/lib/platform-package");
   expect(await listTenantFiles()).toEqual(["001_a.up.sql", "002_b.up.sql"]);
 });
+
+test("readPackageScripts returns the scripts map from package.json", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "pkg-"));
+  await fs.writeFile(
+    path.join(dir, "package.json"),
+    JSON.stringify({ scripts: { "db:seed": "ts-node prisma/seed.ts" } }),
+  );
+  process.env.PLATFORM_PACKAGE_DIR = dir;
+  vi.resetModules();
+  const { readPackageScripts } = await import("@/lib/platform-package");
+  expect(await readPackageScripts()).toEqual({ "db:seed": "ts-node prisma/seed.ts" });
+});
+
+test("readPackageScripts returns null when package.json is absent", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "pkg-"));
+  process.env.PLATFORM_PACKAGE_DIR = dir;
+  vi.resetModules();
+  const { readPackageScripts } = await import("@/lib/platform-package");
+  expect(await readPackageScripts()).toBeNull();
+});
+
+test("readPackageScripts returns null when package.json has no scripts key", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "pkg-"));
+  await fs.writeFile(path.join(dir, "package.json"), "{}");
+  process.env.PLATFORM_PACKAGE_DIR = dir;
+  vi.resetModules();
+  const { readPackageScripts } = await import("@/lib/platform-package");
+  expect(await readPackageScripts()).toBeNull();
+});
