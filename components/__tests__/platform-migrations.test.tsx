@@ -49,3 +49,31 @@ test("destructive op also requires the destroy checkbox", () => {
   fireEvent.click(screen.getByLabelText(/destroys data/i));
   expect(run).toBeEnabled();
 });
+
+test("shows the npm script and .ts file under an op label", () => {
+  render(<PlatformMigrations {...props} scriptInfo={{
+    "seed-permission": { script: "db:seed.permission", file: "seed.permission.ts", missing: false },
+  }} />);
+  expect(screen.getByText("db:seed.permission · seed.permission.ts")).toBeInTheDocument();
+});
+
+test("shows the script name only when there is no .ts file", () => {
+  render(<PlatformMigrations {...props} scriptInfo={{
+    "prisma-deploy": { script: "db:deploy", file: null, missing: false },
+  }} />);
+  expect(screen.getByText("db:deploy")).toBeInTheDocument();
+  expect(screen.queryByText(/·/)).not.toBeInTheDocument();
+});
+
+test("flags an op whose script is missing from the package", () => {
+  render(<PlatformMigrations {...props} scriptInfo={{
+    "seed-application": { script: "db:seed.application", file: null, missing: true },
+  }} />);
+  expect(screen.getByText(/not in package/i)).toBeInTheDocument();
+});
+
+test("renders the label only when an op has no scriptInfo entry", () => {
+  render(<PlatformMigrations {...props} scriptInfo={{}} />);
+  expect(screen.getByText("Seed: baseline")).toBeInTheDocument();
+  expect(screen.queryByText(/not in package/i)).not.toBeInTheDocument();
+});
