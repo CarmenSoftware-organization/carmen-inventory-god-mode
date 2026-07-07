@@ -1,4 +1,4 @@
-export type OpGroup = "prisma" | "tenant" | "seed" | "danger";
+export type OpGroup = "prisma" | "tenant" | "seed" | "check" | "danger";
 
 export type CatalogOp = {
   id: string;
@@ -19,6 +19,10 @@ const seed = (id: string, run: string, label: string): CatalogOp => ({
   id, group: "seed", label, kind: "script", run, writes: true, destructive: false,
 });
 
+const check = (id: string, run: string, label: string): CatalogOp => ({
+  id, group: "check", label, kind: "script", run, writes: false, destructive: false, readonly: true,
+});
+
 export const CATALOG: CatalogOp[] = [
   { id: "prisma-status", group: "prisma", label: "Prisma: migration status (read-only)",
     kind: "bin", run: "prisma migrate status", baseArgs: ["x", "prisma", "migrate", "status"],
@@ -36,18 +40,21 @@ export const CATALOG: CatalogOp[] = [
   seed("seed", "db:seed", "Seed: baseline"),
   seed("seed-permission", "db:seed.permission", "Seed: permission catalog"),
   seed("seed-platform-permission", "db:seed.platform-permission", "Seed: platform permissions"),
-  seed("seed-application", "db:seed.application", "Seed: applications"),
   seed("seed-role-permission", "db:seed.role-permission", "Seed: role permissions"),
+  seed("seed-platform-role", "db:seed.platform-role", "Seed: platform roles"),
   seed("seed-platform-role-permission", "db:seed.platform-role-permission", "Seed: platform role permissions"),
   seed("seed-platform-super-admin", "db:seed.platform-super-admin", "Seed: platform super admin"),
   seed("seed-report-template", "db:seed.report-template", "Seed: report templates"),
+  seed("seed-report-template-upload", "db:seed.report-template-upload", "Seed: report template uploads"),
+
+  check("check-permission", "db:check.permission", "Check: permission drift"),
+  check("check-platform-permission", "db:check.platform-permission", "Check: platform permission drift"),
+  check("check-platform-role-permission", "db:check.platform-role-permission", "Check: platform role-permission drift"),
 
   { id: "migrate-reset", group: "danger", label: "DANGER: prisma migrate reset (drops & recreates)",
     kind: "script", run: "db:migrate:reset", writes: true, destructive: true },
   { id: "seed-reset", group: "danger", label: "DANGER: seed reset (migrate reset + seed)",
     kind: "script", run: "db:seed:reset", writes: true, destructive: true },
-  { id: "mock-reset", group: "danger", label: "DANGER: mock reset (reset + seed + mock)",
-    kind: "script", run: "db:mock:reset", writes: true, destructive: true },
 ];
 
 for (const op of CATALOG) {
@@ -57,6 +64,30 @@ for (const op of CATALOG) {
 
 export function findOp(id: string): CatalogOp | undefined {
   return CATALOG.find((o) => o.id === id);
+}
+
+export type ScriptInfo = {
+  script: string;
+  file: string | null;
+  missing: boolean;
+};
+
+export function extractTsFile(command: string): string | null {
+  const matches = command.match(/\S+\.ts\b/g);
+  if (!matches) return null;
+  const bases = [...new Set(matches.map((m) => m.split("/").pop()!))];
+  return bases.length === 1 ? bases[0] : null;
+}
+
+export function resolveScriptInfo(
+  op: CatalogOp,
+  scripts: Record<string, string> | null,
+): ScriptInfo {
+  if (op.kind === "bin") return { script: op.run, file: null, missing: false };
+  if (!scripts) return { script: op.run, file: null, missing: false };
+  const command = scripts[op.run];
+  if (command === undefined) return { script: op.run, file: null, missing: true };
+  return { script: op.run, file: extractTsFile(command), missing: false };
 }
 
 const BU_RE = /^[A-Za-z0-9_-]+$/;

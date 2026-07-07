@@ -1,17 +1,20 @@
 import { PlatformMigrations } from "@/components/platform-migrations";
-import { CATALOG } from "@/lib/platform-migrations";
+import { CATALOG, resolveScriptInfo, type ScriptInfo } from "@/lib/platform-migrations";
 import { listBusinessUnits } from "@/lib/registry";
 import { listSchemaNames } from "@/lib/introspect";
-import { listTenantFiles, targetDbInfo } from "@/lib/platform-package";
+import { listTenantFiles, targetDbInfo, readPackageScripts } from "@/lib/platform-package";
 
 export const dynamic = "force-dynamic";
 
 export default async function PlatformMigrationsPage() {
-  const [bus, tenantFiles, schemas] = await Promise.all([
-    listBusinessUnits(), listTenantFiles(), listSchemaNames(),
+  const [bus, tenantFiles, schemas, scripts] = await Promise.all([
+    listBusinessUnits(), listTenantFiles(), listSchemaNames(), readPackageScripts(),
   ]);
   const buCodes = bus.filter((b) => b.isActive).map((b) => b.code);
   const target = targetDbInfo();
+  const scriptInfo: Record<string, ScriptInfo> = Object.fromEntries(
+    CATALOG.map((op) => [op.id, resolveScriptInfo(op, scripts)]),
+  );
   return (
     <div className="space-y-4">
       <div className="space-y-1">
@@ -24,7 +27,7 @@ export default async function PlatformMigrationsPage() {
       </div>
       <PlatformMigrations
         target={target} catalog={CATALOG} buCodes={buCodes} tenantFiles={tenantFiles}
-        schemas={schemas} defaultSchema={target.schema}
+        schemas={schemas} defaultSchema={target.schema} scriptInfo={scriptInfo}
       />
     </div>
   );

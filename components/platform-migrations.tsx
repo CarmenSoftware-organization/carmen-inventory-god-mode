@@ -4,7 +4,7 @@ import { TriangleAlert, CircleX } from "lucide-react";
 import { useOperationStream } from "@/components/use-operation-stream";
 import { OperationProgress } from "@/components/operation-progress";
 import { OperationLog } from "@/components/operation-log";
-import { canRun, validateSchemaName, type CatalogOp, type OpGroup } from "@/lib/platform-migrations";
+import { canRun, validateSchemaName, type CatalogOp, type OpGroup, type ScriptInfo } from "@/lib/platform-migrations";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +16,7 @@ const GROUPS: { key: OpGroup; title: string }[] = [
   { key: "prisma", title: "Prisma schema migrations" },
   { key: "tenant", title: "Tenant view migrations (all active BU schemas)" },
   { key: "seed", title: "Seed scripts" },
+  { key: "check", title: "Drift checks (read-only)" },
   { key: "danger", title: "Danger zone: destructive resets" },
 ];
 
@@ -26,6 +27,7 @@ export function PlatformMigrations({
   tenantFiles,
   schemas,
   defaultSchema,
+  scriptInfo = {},
 }: {
   target: TargetDb;
   catalog: CatalogOp[];
@@ -33,6 +35,7 @@ export function PlatformMigrations({
   tenantFiles: string[];
   schemas: string[];
   defaultSchema: string;
+  scriptInfo?: Record<string, ScriptInfo>;
 }) {
   const { state, start } = useOperationStream();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -154,21 +157,39 @@ export function PlatformMigrations({
               {g.title}
             </legend>
             <div className="space-y-1.5">
-              {ops.map((o) => (
-                <label
-                  key={o.id}
-                  className="flex cursor-pointer items-center gap-2 text-sm"
-                >
-                  <input
-                    type="radio"
-                    name="op"
-                    checked={selectedId === o.id}
-                    onChange={() => select(o.id)}
-                    className="accent-accent"
-                  />
-                  <span>{o.label}</span>
-                </label>
-              ))}
+              {ops.map((o) => {
+                const info = scriptInfo[o.id];
+                return (
+                  <label
+                    key={o.id}
+                    className="flex cursor-pointer items-start gap-2 text-sm"
+                  >
+                    <input
+                      type="radio"
+                      name="op"
+                      checked={selectedId === o.id}
+                      onChange={() => select(o.id)}
+                      className="mt-0.5 accent-accent"
+                    />
+                    <span className="flex flex-col">
+                      <span className="flex items-center gap-1.5">
+                        {o.label}
+                        {info?.missing && (
+                          <span className="inline-flex items-center gap-1 rounded border border-warning-border bg-warning-subtle px-1.5 py-0.5 text-xs font-medium text-warning-subtle-foreground">
+                            <TriangleAlert className="h-3 w-3" aria-hidden="true" />
+                            not in package
+                          </span>
+                        )}
+                      </span>
+                      {info && (
+                        <span className="font-mono text-xs text-foreground-subtle">
+                          {info.file ? `${info.script} · ${info.file}` : info.script}
+                        </span>
+                      )}
+                    </span>
+                  </label>
+                );
+              })}
             </div>
           </fieldset>
         );
