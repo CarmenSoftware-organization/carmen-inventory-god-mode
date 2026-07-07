@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   CATALOG, findOp, validateBuCode, validateOnlyPrefix, buildArgv, canRun, validateSchemaName,
+  extractTsFile, resolveScriptInfo,
 } from "@/lib/platform-migrations";
 
 test("catalog exposes the expected operation ids across groups", () => {
@@ -84,4 +85,45 @@ test("canRun gates writes on the schema phrase, destructive checkbox, and new-sc
   // new schema on a write: needs the create checkbox
   expect(canRun(deploy, { ...base, schema: "NEW_ENV", confirm: "NEW_ENV" })).toBe(false);
   expect(canRun(deploy, { ...base, schema: "NEW_ENV", confirm: "NEW_ENV", createChecked: true })).toBe(true);
+});
+
+test("extractTsFile returns the basename of a single .ts in the command", () => {
+  expect(extractTsFile("ts-node -r tsconfig-paths/register prisma/seed.permission.ts"))
+    .toBe("seed.permission.ts");
+});
+
+test("extractTsFile returns null when there is no .ts", () => {
+  expect(extractTsFile("prisma migrate deploy")).toBeNull();
+});
+
+test("extractTsFile picks the single .ts from a compound command", () => {
+  expect(extractTsFile(
+    "prisma migrate reset --force && ts-node -r tsconfig-paths/register prisma/seed.ts",
+  )).toBe("seed.ts");
+});
+
+test("extractTsFile returns null when multiple distinct .ts files are present", () => {
+  expect(extractTsFile("ts-node a.ts && ts-node b.ts")).toBeNull();
+});
+
+test("resolveScriptInfo returns the run command for bin ops without a file", () => {
+  const info = resolveScriptInfo(findOp("prisma-status")!, { "db:seed": "ts-node prisma/seed.ts" });
+  expect(info).toEqual({ script: "prisma migrate status", file: null, missing: false });
+});
+
+test("resolveScriptInfo resolves a known script to its .ts file", () => {
+  const info = resolveScriptInfo(findOp("seed-permission")!, {
+    "db:seed.permission": "ts-node -r tsconfig-paths/register prisma/seed.permission.ts",
+  });
+  expect(info).toEqual({ script: "db:seed.permission", file: "seed.permission.ts", missing: false });
+});
+
+test("resolveScriptInfo flags a script missing from the package", () => {
+  const info = resolveScriptInfo(findOp("seed-application")!, {});
+  expect(info).toEqual({ script: "db:seed.application", file: null, missing: true });
+});
+
+test("resolveScriptInfo does not accuse when scripts are unavailable", () => {
+  const info = resolveScriptInfo(findOp("seed-permission")!, null);
+  expect(info).toEqual({ script: "db:seed.permission", file: null, missing: false });
 });

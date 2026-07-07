@@ -59,6 +59,30 @@ export function findOp(id: string): CatalogOp | undefined {
   return CATALOG.find((o) => o.id === id);
 }
 
+export type ScriptInfo = {
+  script: string;
+  file: string | null;
+  missing: boolean;
+};
+
+export function extractTsFile(command: string): string | null {
+  const matches = command.match(/\S+\.ts\b/g);
+  if (!matches) return null;
+  const bases = [...new Set(matches.map((m) => m.split("/").pop()!))];
+  return bases.length === 1 ? bases[0] : null;
+}
+
+export function resolveScriptInfo(
+  op: CatalogOp,
+  scripts: Record<string, string> | null,
+): ScriptInfo {
+  if (op.kind === "bin") return { script: op.run, file: null, missing: false };
+  if (!scripts) return { script: op.run, file: null, missing: false };
+  const command = scripts[op.run];
+  if (command === undefined) return { script: op.run, file: null, missing: true };
+  return { script: op.run, file: extractTsFile(command), missing: false };
+}
+
 const BU_RE = /^[A-Za-z0-9_-]+$/;
 const PREFIX_RE = /^[A-Za-z0-9_.-]+$/;
 
