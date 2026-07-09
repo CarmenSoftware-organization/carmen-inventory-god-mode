@@ -37,6 +37,7 @@ export const CATALOG: CatalogOp[] = [
     kind: "script", run: "db:tenant-views:revert", acceptsBu: true, acceptsOnly: true,
     writes: true, destructive: true, requiresPsql: true },
 
+  seed("seed-currency-iso", "db:seed.currency-iso", "Seed: currency ISO codes"),
   seed("seed", "db:seed", "Seed: baseline"),
   seed("seed-permission", "db:seed.permission", "Seed: permission catalog"),
   seed("seed-platform-permission", "db:seed.platform-permission", "Seed: platform permissions"),

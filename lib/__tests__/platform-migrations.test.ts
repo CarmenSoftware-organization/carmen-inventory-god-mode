@@ -9,7 +9,7 @@ test("catalog exposes the expected operation ids across groups", () => {
   expect(ids).toEqual(expect.arrayContaining([
     "prisma-status", "prisma-deploy",
     "tenant-apply", "tenant-revert",
-    "seed", "seed-permission", "seed-platform-super-admin",
+    "seed", "seed-currency-iso", "seed-permission", "seed-platform-super-admin",
     "seed-platform-role", "seed-report-template-upload",
     "check-permission", "check-platform-permission", "check-platform-role-permission",
     "migrate-reset", "seed-reset",
