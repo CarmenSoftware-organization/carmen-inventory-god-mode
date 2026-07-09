@@ -9,10 +9,10 @@ test("catalog exposes the expected operation ids across groups", () => {
   expect(ids).toEqual(expect.arrayContaining([
     "prisma-status", "prisma-deploy",
     "tenant-apply", "tenant-revert",
-    "seed", "seed-permission", "seed-platform-super-admin",
+    "seed-currency-iso", "seed-permission", "seed-platform-super-admin",
     "seed-platform-role", "seed-report-template-upload",
     "check-permission", "check-platform-permission", "check-platform-role-permission",
-    "migrate-reset", "seed-reset",
+    "migrate-reset",
   ]));
   expect(findOp("prisma-status")?.readonly).toBe(true);
   expect(findOp("prisma-deploy")?.writes).toBe(true);
@@ -29,10 +29,12 @@ test("drift-check ops are read-only (no confirm needed)", () => {
 });
 
 test("catalog does not offer ops whose scripts are absent from the package", () => {
-  // db:seed.application and db:mock:reset have no npm script (and no .ts file)
-  // in @repo/prisma-shared-schema-platform, so running them can only fail.
+  // These reference db:* scripts that don't exist in
+  // @repo/prisma-shared-schema-platform, so running them can only fail.
   expect(findOp("seed-application")).toBeUndefined();
   expect(findOp("mock-reset")).toBeUndefined();
+  expect(findOp("seed")).toBeUndefined();
+  expect(findOp("seed-reset")).toBeUndefined();
 });
 
 test("findOp returns undefined for unknown ids", () => {
@@ -62,7 +64,7 @@ test("buildArgv builds bun argv for script and bin ops, with -- separated args",
 });
 
 test("buildArgv ignores bu/only on ops that do not accept them", () => {
-  expect(buildArgv(findOp("seed")!, { bu: "T03", only: "x" })).toEqual(["run", "db:seed"]);
+  expect(buildArgv(findOp("seed-permission")!, { bu: "T03", only: "x" })).toEqual(["run", "db:seed.permission"]);
 });
 
 test("every catalog op satisfies the gate invariants", () => {

@@ -81,6 +81,6 @@ test("flags an op whose script is missing from the package", () => {
 
 test("renders the label only when an op has no scriptInfo entry", () => {
   render(<PlatformMigrations {...props} scriptInfo={{}} />);
-  expect(screen.getByText("Seed: baseline")).toBeInTheDocument();
+  expect(screen.getByText("Seed: currency ISO codes")).toBeInTheDocument();
   expect(screen.queryByText(/not in package/i)).not.toBeInTheDocument();
 });
