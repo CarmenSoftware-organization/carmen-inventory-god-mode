@@ -2,12 +2,9 @@ import { expect, test } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { CATALOG } from "@/lib/platform-migrations";
+import { DEFAULT_REL } from "@/lib/platform-package";
 
-// Resolve the platform package the same way lib/platform-package.ts's
-// packageDir() does, but WITHOUT going through env() (which validates the whole
-// env schema and would throw when unrelated vars are unset in a bare test run).
-const DEFAULT_REL = "../carmen-turborepo-backend-v2/packages/prisma-shared-schema-platform";
-
+// Import DEFAULT_REL to keep path in sync; module import has no env() side effect.
 function readRealScripts(): Record<string, string> | null {
   const dir = process.env.PLATFORM_PACKAGE_DIR ?? path.resolve(process.cwd(), DEFAULT_REL);
   try {
