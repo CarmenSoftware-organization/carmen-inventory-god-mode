@@ -38,7 +38,6 @@ export const CATALOG: CatalogOp[] = [
     writes: true, destructive: true, requiresPsql: true },
 
   seed("seed-currency-iso", "db:seed.currency-iso", "Seed: currency ISO codes"),
-  seed("seed", "db:seed", "Seed: baseline"),
   seed("seed-permission", "db:seed.permission", "Seed: permission catalog"),
   seed("seed-platform-permission", "db:seed.platform-permission", "Seed: platform permissions"),
   seed("seed-role-permission", "db:seed.role-permission", "Seed: role permissions"),
@@ -54,8 +53,6 @@ export const CATALOG: CatalogOp[] = [
 
   { id: "migrate-reset", group: "danger", label: "DANGER: prisma migrate reset (drops & recreates)",
     kind: "script", run: "db:migrate:reset", writes: true, destructive: true },
-  { id: "seed-reset", group: "danger", label: "DANGER: seed reset (migrate reset + seed)",
-    kind: "script", run: "db:seed:reset", writes: true, destructive: true },
 ];
 
 for (const op of CATALOG) {
