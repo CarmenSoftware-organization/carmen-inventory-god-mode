@@ -6,7 +6,7 @@ permanent — there is no undo.** The audit log is the only recovery record.
 ## Setup
 1. `cp .env.example .env.local` and fill in `GOD_MODE_PASSWORD`, `SESSION_SECRET` (>=32 chars), and the DB URLs.
 2. `bun install`
-3. `bun run dev` (uses `.env.local`). Use `bun run dev:local` / `bun run dev:prod` to pick `.env.local` vs `.env.prod` explicitly. The server port comes from `PORT` in the chosen env file (3305 by default).
+3. `bun run dev` (uses `.env.local`). Use `bun run dev:local` / `bun run dev:prod` / `bun run dev:uat` to pick `.env.local` / `.env.prod` / `.env.uat` explicitly. The server port comes from `PORT` in the chosen env file (3305 by default).
 
 The `CARMEN_SYSTEM.tb_god_mode_audit` table is created automatically on the first audited operation — any delete, edit, raw-SQL write, or platform migration self-ensures it.
 
