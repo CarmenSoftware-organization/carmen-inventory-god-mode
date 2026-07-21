@@ -6,6 +6,7 @@
     "dev": "bun run dev:local",
     "dev:local": "bun --env-file=.env.local next dev",
     "dev:prod": "bun --env-file=.env.prod next dev",
+    "dev:uat": "bun --env-file=.env.uat next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
