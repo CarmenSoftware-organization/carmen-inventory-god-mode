@@ -30,3 +30,18 @@ test.skipIf(!scripts)(
     expect(missing.map((o) => `${o.id} → ${o.run}`)).toEqual([]);
   },
 );
+
+// Reverse direction: catch a new upstream operator-facing script that nobody
+// wired into the catalog. Scoped to db:seed.* / db:check.* so intentionally
+// unsurfaced scripts (db:generate, db:migrate, db:deploy, db:migrate:reset,
+// build) stay out of scope.
+test.skipIf(!scripts)(
+  "every db:seed.* and db:check.* package script is surfaced in the catalog",
+  () => {
+    const catalogRuns = new Set(CATALOG.map((o) => o.run));
+    const unsurfaced = Object.keys(scripts!)
+      .filter((name) => /^db:(seed|check)\./.test(name) && !catalogRuns.has(name))
+      .sort();
+    expect(unsurfaced).toEqual([]);
+  },
+);

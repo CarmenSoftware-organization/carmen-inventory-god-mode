@@ -49,6 +49,7 @@ export const CATALOG: CatalogOp[] = [
   check("check-permission", "db:check.permission", "Check: permission drift"),
   check("check-platform-permission", "db:check.platform-permission", "Check: platform permission drift"),
   check("check-platform-role-permission", "db:check.platform-role-permission", "Check: platform role-permission drift"),
+  check("check-endpoint-permission", "db:check.endpoint-permission", "Check: endpoint permission coverage"),
 
   { id: "migrate-reset", group: "danger", label: "DANGER: prisma migrate reset (drops & recreates)",
     kind: "script", run: "db:migrate:reset", writes: true, destructive: true },
