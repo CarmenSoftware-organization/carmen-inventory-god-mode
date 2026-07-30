@@ -60,3 +60,9 @@ test("platformPackageDir is undefined by default and passes through when set", (
   expect(loadEnv(base).platformPackageDir).toBeUndefined();
   expect(loadEnv({ ...base, PLATFORM_PACKAGE_DIR: "/x/pkg" }).platformPackageDir).toBe("/x/pkg");
 });
+
+test("allowDangerOps only true for the literal string 'true'", () => {
+  expect(loadEnv(base).allowDangerOps).toBe(false);
+  expect(loadEnv({ ...base, ALLOW_DANGER_OPS: "true" }).allowDangerOps).toBe(true);
+  expect(loadEnv({ ...base, ALLOW_DANGER_OPS: "1" }).allowDangerOps).toBe(false);
+});

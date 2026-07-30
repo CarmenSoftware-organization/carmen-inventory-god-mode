@@ -14,6 +14,7 @@ const schema = z.object({
   BACKEND_API_INSECURE_TLS: z.string().optional(),
   SYSTEM_DIRECT_URL: z.string().min(1).optional(),
   PLATFORM_PACKAGE_DIR: z.string().min(1).optional(),
+  ALLOW_DANGER_OPS: z.string().optional(),
 });
 
 export type Env = {
@@ -31,6 +32,7 @@ export type Env = {
   gatewayEnabled: boolean;
   systemDirectUrl: string;
   platformPackageDir?: string;
+  allowDangerOps: boolean;
 };
 
 export function loadEnv(raw: Record<string, string | undefined>): Env {
@@ -50,6 +52,7 @@ export function loadEnv(raw: Record<string, string | undefined>): Env {
     gatewayEnabled: !!p.BACKEND_API_BASE_URL,
     systemDirectUrl: p.SYSTEM_DIRECT_URL ?? p.SYSTEM_DATABASE_URL,
     platformPackageDir: p.PLATFORM_PACKAGE_DIR,
+    allowDangerOps: p.ALLOW_DANGER_OPS === "true",
   };
 }
 
