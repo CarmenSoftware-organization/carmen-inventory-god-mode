@@ -114,6 +114,9 @@ test("danger op is rejected with 403 when ALLOW_DANGER_OPS is unset", async () =
   const { POST } = await import("@/app/api/ops/platform-migrate/route");
   const res = await POST(req({ opId: "migrate-reset", schema: SCHEMA, confirm: SCHEMA, confirmDestroy: true }));
   expect(res.status).toBe(403);
+  expect(((await res.json()) as { error: string }).error).toBe(
+    "Danger operations are disabled; set ALLOW_DANGER_OPS=true to enable",
+  );
   expect(runProcess).not.toHaveBeenCalled();
 });
 

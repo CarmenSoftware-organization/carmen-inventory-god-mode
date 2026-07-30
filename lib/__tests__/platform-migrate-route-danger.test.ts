@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, expect, test, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, expect, test, vi } from "vitest";
 
 beforeAll(() => {
   process.env.SYSTEM_DATABASE_URL = "postgresql://u:p@h:6432/carmen_platform";
@@ -43,6 +43,7 @@ const SCHEMA = "CARMEN_SYSTEM";
 
 beforeEach(() => { runProcess.mockClear(); });
 afterEach(() => { vi.restoreAllMocks(); });
+afterAll(() => { delete process.env.ALLOW_DANGER_OPS; });
 
 test("migrate-reset still requires confirmDestroy when the flag is on", async () => {
   const { POST } = await import("@/app/api/ops/platform-migrate/route");
