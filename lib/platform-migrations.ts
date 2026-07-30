@@ -64,6 +64,10 @@ export function findOp(id: string): CatalogOp | undefined {
   return CATALOG.find((o) => o.id === id);
 }
 
+export function visibleCatalog(allowDanger: boolean): CatalogOp[] {
+  return allowDanger ? CATALOG : CATALOG.filter((o) => o.group !== "danger");
+}
+
 export type ScriptInfo = {
   script: string;
   file: string | null;

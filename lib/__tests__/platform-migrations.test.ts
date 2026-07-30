@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import {
-  CATALOG, findOp, validateBuCode, validateOnlyPrefix, buildArgv, canRun, validateSchemaName,
+  CATALOG, findOp, visibleCatalog, validateBuCode, validateOnlyPrefix, buildArgv, canRun, validateSchemaName,
   extractTsFile, resolveScriptInfo,
 } from "@/lib/platform-migrations";
 
@@ -146,4 +146,11 @@ test("resolveScriptInfo flags a script missing from the package", () => {
 test("resolveScriptInfo does not accuse when scripts are unavailable", () => {
   const info = resolveScriptInfo(findOp("seed-permission")!, null);
   expect(info).toEqual({ script: "db:seed.permission", file: null, missing: false });
+});
+
+test("visibleCatalog hides the danger group unless allowed", () => {
+  expect(visibleCatalog(false).some((o) => o.group === "danger")).toBe(false);
+  expect(visibleCatalog(false).map((o) => o.id)).not.toContain("migrate-reset");
+  expect(visibleCatalog(true).map((o) => o.id)).toContain("migrate-reset");
+  expect(visibleCatalog(true)).toHaveLength(CATALOG.length);
 });
