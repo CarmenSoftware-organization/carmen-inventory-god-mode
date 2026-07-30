@@ -6,6 +6,7 @@ beforeAll(() => {
   process.env.SYSTEM_SCHEMA_NAME = "CARMEN_SYSTEM";
   process.env.GOD_MODE_PASSWORD = "x";
   process.env.SESSION_SECRET = "x".repeat(32);
+  delete process.env.ALLOW_DANGER_OPS;
 });
 
 vi.mock("@/lib/session", () => ({ requireAuth: vi.fn(async () => ({ authed: true, actor: "operator@example.com" })) }));
@@ -102,11 +103,18 @@ test("write op runs when confirm equals the schema name", async () => {
 
 test("destructive op requires confirmDestroy in addition to the phrase", async () => {
   const { POST } = await import("@/app/api/ops/platform-migrate/route");
-  const noFlag = await POST(req({ opId: "migrate-reset", schema: SCHEMA, confirm: SCHEMA }));
+  const noFlag = await POST(req({ opId: "tenant-revert", schema: SCHEMA, confirm: SCHEMA }));
   expect(noFlag.status).toBe(400);
-  const ok = await POST(req({ opId: "migrate-reset", schema: SCHEMA, confirm: SCHEMA, confirmDestroy: true }));
+  const ok = await POST(req({ opId: "tenant-revert", schema: SCHEMA, confirm: SCHEMA, confirmDestroy: true }));
   expect(ok.status).toBe(200);
   await collect(ok);
+});
+
+test("danger op is rejected with 403 when ALLOW_DANGER_OPS is unset", async () => {
+  const { POST } = await import("@/app/api/ops/platform-migrate/route");
+  const res = await POST(req({ opId: "migrate-reset", schema: SCHEMA, confirm: SCHEMA, confirmDestroy: true }));
+  expect(res.status).toBe(403);
+  expect(runProcess).not.toHaveBeenCalled();
 });
 
 test("new schema on a write op requires confirmCreateSchema, then bootstraps it", async () => {

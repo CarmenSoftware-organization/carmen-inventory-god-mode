@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/session";
+import { env } from "@/lib/env";
 import { streamOperation } from "@/lib/progress";
 import { withTransaction } from "@/lib/db";
 import { ensureAuditTable, writeAudit } from "@/lib/audit";
@@ -77,6 +78,9 @@ export async function POST(request: Request): Promise<Response> {
     (await request.json()) as Body;
   const op = findOp(opId);
   if (!op) return bad(`Unknown operation: ${opId}`, 404);
+  if (op.group === "danger" && !env().allowDangerOps) {
+    return bad("Danger operations are disabled; set ALLOW_DANGER_OPS=true to enable", 403);
+  }
 
   // Validate the target schema (charset always; new-schema gate only for writes).
   const schemaName = (schema ?? "").trim();

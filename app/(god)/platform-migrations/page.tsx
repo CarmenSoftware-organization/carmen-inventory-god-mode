@@ -1,5 +1,6 @@
 import { PlatformMigrations } from "@/components/platform-migrations";
-import { CATALOG, resolveScriptInfo, type ScriptInfo } from "@/lib/platform-migrations";
+import { visibleCatalog, resolveScriptInfo, type ScriptInfo } from "@/lib/platform-migrations";
+import { env } from "@/lib/env";
 import { listBusinessUnits } from "@/lib/registry";
 import { listSchemaNames } from "@/lib/introspect";
 import { listTenantFiles, targetDbInfo, readPackageScripts } from "@/lib/platform-package";
@@ -12,8 +13,9 @@ export default async function PlatformMigrationsPage() {
   ]);
   const buCodes = bus.filter((b) => b.isActive).map((b) => b.code);
   const target = targetDbInfo();
+  const catalog = visibleCatalog(env().allowDangerOps);
   const scriptInfo: Record<string, ScriptInfo> = Object.fromEntries(
-    CATALOG.map((op) => [op.id, resolveScriptInfo(op, scripts)]),
+    catalog.map((op) => [op.id, resolveScriptInfo(op, scripts)]),
   );
   return (
     <div className="space-y-4">
@@ -26,7 +28,7 @@ export default async function PlatformMigrationsPage() {
         </p>
       </div>
       <PlatformMigrations
-        target={target} catalog={CATALOG} buCodes={buCodes} tenantFiles={tenantFiles}
+        target={target} catalog={catalog} buCodes={buCodes} tenantFiles={tenantFiles}
         schemas={schemas} defaultSchema={target.schema} scriptInfo={scriptInfo}
       />
     </div>
