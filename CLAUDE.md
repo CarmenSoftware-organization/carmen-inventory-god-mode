@@ -10,6 +10,7 @@ points at the real dev DB — treat cascade delete / `DROP SCHEMA` as prod data.
 - `bun run dev`/`start` — port **3305** (not 3000), set via `PORT` in the env file. `bun run dev` = `dev:local` (`.env.local`); `bun run dev:prod` uses `.env.prod`; `dev:uat` uses `.env.uat`. `bun run test` (Vitest — never `bun test`), `bun run typecheck`, `bun run lint`.
 - E2E: `node_modules/.bin/playwright test` (auto-starts/reuses the dev server). `bun <file.ts>` auto-loads `.env.local`.
 - `/platform-migrations` page runs the `prisma-shared-schema-platform` package's own scripts via subprocess (`lib/run-process.ts`, `lib/platform-package.ts`, `lib/platform-migrations.ts`, `app/api/ops/platform-migrate/route.ts`); needs `PLATFORM_PACKAGE_DIR` + `SYSTEM_DIRECT_URL`, `bun`/`psql` on PATH. Spec: `docs/superpowers/specs/2026-06-29-platform-migrations-page-design.md`.
+- `bun run build:bump` — cut a release: bumps `package.json`, makes a `chore(release): vX.Y.Z` commit and an annotated `vX.Y.Z` tag. **Local only — it never pushes.** Runs on `main` with a clean tree that's not behind its upstream (skipped if no upstream is configured), gates on `typecheck` + `lint`, and prompts for patch/minor/major; pass the level (`bun run build:bump patch`) to skip the prompt. Spec: `docs/superpowers/specs/2026-08-05-build-bump-design.md`.
 
 ## Tests
 - `.test.ts` → node; `.test.tsx` → jsdom; `.int.test.ts` → embedded-postgres via `@/test/pg` `startPg()` (fresh container/file, `fileParallelism: false`, 60s timeout).
