@@ -99,13 +99,22 @@ typecheck/lint gate, and an interactive level prompt.
 
 ### Structure of `scripts/bump.ts`
 
-Four units, each independently understandable:
+Five units, each independently understandable:
 
 - **`nextVersions(current: string): { patch, minor, major }`** — pure. Parses
   `MAJOR.MINOR.PATCH` and returns the three candidate versions. No IO. This is
   the only piece with real logic, and it is the only piece worth testing.
 - **`assertBranchAndTree(): void`** — instant `git` checks: current branch is
   `main`, working tree is clean.
+- **`assertUpToDate(): void`** — instant. Resolves the branch's upstream with
+  `git rev-parse --abbrev-ref --symbolic-full-name @{upstream}`, called through
+  `tryGit()` — a variant of the `git()` helper that returns `null` instead of
+  exiting, because "no upstream configured" is an expected outcome here, not a
+  fatal git error. No upstream: the check is skipped, and that is printed
+  rather than silent. An upstream: `git rev-list --count HEAD..@{upstream}` — a
+  non-zero count means local is behind and aborts with a `git pull` hint; being
+  *ahead* of upstream is normal and does not abort. Only already-fetched
+  remote-tracking refs are consulted — this never runs `git fetch`.
 - **`assertTagFree(version: string): void`** — instant. Aborts if `v<version>`
   already exists. Deliberately checks only the **chosen** version, not all three
   candidates: an existing `v0.1.1` must not block a `minor` bump to `v0.2.0`.
@@ -133,17 +142,19 @@ the `@types/node` already present and are the established pattern here
 ```
 1. read version from package.json + nextVersions()
 2. assertBranchAndTree()            instant — fail before the user invests time
-3. promptLevel()                    user answers immediately, no waiting
-4. assertTagFree(chosen)            instant
-5. bun run --silent typecheck       ~10-20s
-6. bun run --silent lint
-7. bun pm version <level> -m "chore(release): v%s"
-8. print the push command as the suggested next step
+3. assertUpToDate()                 instant — already-fetched refs only, no `git fetch`
+4. promptLevel()                    user answers immediately, no waiting
+5. assertTagFree(chosen)            instant
+6. bun run --silent typecheck       ~10-20s
+7. bun run --silent lint
+8. bun pm version <level> -m "chore(release): v%s"
+9. confirm `git tag --list v<target>` is non-empty
+10. print the push command as the suggested next step
 ```
 
 The expensive checks run **after** the prompt on purpose: the user is not made
-to wait before being asked, and because nothing is written to disk until step 7,
-a failure at step 5 or 6 costs only the answer, not a partial release.
+to wait before being asked, and because nothing is written to disk until step 8,
+a failure at step 6 or 7 costs only the answer, not a partial release.
 
 ### Terminal output
 
@@ -151,13 +162,14 @@ a failure at step 5 or 6 costs only the answer, not a partial release.
 $ bun run build:bump
 ▸ branch ........... main ✓
 ▸ working tree ..... clean ✓
+▸ upstream .......... up to date (origin/main) ✓
 
   current: 0.1.0
   ? เลือกระดับ bump
     1) patch  → 0.1.1
     2) minor  → 0.2.0
     3) major  → 1.0.0
-    q) ยกเลิก
+    q) ยกเลิก (หรือกด Enter)
   > 1
 
 ▸ typecheck ........ ✓
@@ -168,6 +180,9 @@ $ bun run build:bump
 
 → ขั้นต่อไป: git push origin main && git push origin v0.1.1
 ```
+
+When there is no upstream configured, that line instead reads
+`▸ upstream .......... skip (ไม่มี upstream) ✓`, and the check is not enforced.
 
 Prompt text is Thai, matching the operator-facing language used elsewhere in
 this tool.
@@ -186,17 +201,24 @@ required for verification here, and for CI later.
 
 ### Error handling
 
-Every failure exits non-zero **before** anything is written:
+Every guard fails non-zero **before** anything is written. The one exception is
+`bun pm version` itself: it rewrites and stages `package.json` before it
+commits, so a failure inside it (e.g. a rejecting pre-commit hook) leaves that
+file bumped and staged even though the script still exits non-zero. See the
+last row below.
 
 | Condition | Behaviour |
 | --- | --- |
 | Not on `main` | `✗ build:bump ต้องรันบน main (ตอนนี้อยู่ <branch>)`, exit 1 |
 | Dirty working tree | print `git status --short`, exit 1 |
+| Local branch behind its upstream | `✗ local อยู่หลัง <upstream> <n> commit — git pull ก่อนรันซ้ำ`, exit 1. Skipped (not an error) when no upstream is configured; never runs `git fetch`. |
 | Tag for the chosen version exists | `✗ tag v0.1.1 มีอยู่แล้ว`, exit 1 |
 | `typecheck` or `lint` fails | forward the tool's raw output, exit with its code |
 | Invalid level argument | `✗ ระดับต้องเป็น patch\|minor\|major`, exit 1 |
 | Unparseable current version | `✗ อ่านเวอร์ชันจาก package.json ไม่ได้: <value>`, exit 1 |
 | `q` or EOF at the prompt | exit 0, nothing done |
+| `bun pm version` fails (e.g. a failing pre-commit hook) | `package.json` is left **bumped and staged** — `bun pm version` writes and stages it before committing. Message names this leftover, points at `git status`, and gives the recovery command: `git restore --staged --worktree package.json` (plain `git checkout package.json` is not enough once it is staged). Exit with `bun pm version`'s status. |
+| `bun pm version` succeeds but `git tag --list v<target>` is empty | `✗ bun pm version รันจบแล้วแต่ไม่พบ tag v<target> — ตรวจ git log และ git tag`, exit 1 — guards against `nextVersions()`'s hand-rolled arithmetic disagreeing with what `bun pm version` actually tagged. |
 
 Subprocess output is forwarded, never swallowed — a failing `typecheck` must
 show which file failed.
