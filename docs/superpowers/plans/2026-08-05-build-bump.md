@@ -35,7 +35,7 @@ Delivers a fully working release script driven by an explicit argument: `bun run
 **Interfaces:**
 - Consumes: nothing.
 - Produces (Task 2 modifies these):
-  - `nextVersions(current: string): Record<Level, string> | null` — pure; returns `null` when `current` does not match `MAJOR.MINOR.PATCH`.
+  - `nextVersions(current: string): Record<Level, string> | null` — pure; returns `null` when `current` does not match `MAJOR.MINOR.PATCH`. **Not exported** — nothing imports it, and no test file is written for it.
   - `type Level = "patch" | "minor" | "major"`
   - `parseLevelArg(): Level` — Task 2 changes the return type to `Level | null`.
   - `fail(message: string): never`
@@ -63,7 +63,7 @@ function git(...args: string[]): string {
 }
 
 /** Pure. `null` when `current` is not MAJOR.MINOR.PATCH. */
-export function nextVersions(current: string): Record<Level, string> | null {
+function nextVersions(current: string): Record<Level, string> | null {
   const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(current);
   if (!m) return null;
   const major = Number(m[1]);
