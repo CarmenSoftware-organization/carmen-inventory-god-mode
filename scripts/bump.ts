@@ -138,7 +138,7 @@ function assertBranchAndTree(): void {
 function assertUpToDate(): void {
   const upstream = tryGit("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}");
   if (upstream === null) {
-    console.log("▸ upstream .......... skip (ไม่มี upstream) ✓");
+    console.log("▸ upstream ......... skip (ไม่มี upstream) ✓");
     return;
   }
 
@@ -146,7 +146,7 @@ function assertUpToDate(): void {
   if (behind !== 0) {
     fail(`local อยู่หลัง ${upstream} ${behind} commit — git pull ก่อนรันซ้ำ`);
   }
-  console.log(`▸ upstream .......... up to date (${upstream}) ✓`);
+  console.log(`▸ upstream ......... up to date (${upstream}) ✓`);
 }
 
 /**

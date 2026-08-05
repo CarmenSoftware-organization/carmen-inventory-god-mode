@@ -162,7 +162,7 @@ a failure at step 6 or 7 costs only the answer, not a partial release.
 $ bun run build:bump
 ▸ branch ........... main ✓
 ▸ working tree ..... clean ✓
-▸ upstream .......... up to date (origin/main) ✓
+▸ upstream ......... up to date (origin/main) ✓
 
   current: 0.1.0
   ? เลือกระดับ bump
@@ -182,7 +182,7 @@ $ bun run build:bump
 ```
 
 When there is no upstream configured, that line instead reads
-`▸ upstream .......... skip (ไม่มี upstream) ✓`, and the check is not enforced.
+`▸ upstream ......... skip (ไม่มี upstream) ✓`, and the check is not enforced.
 
 Prompt text is Thai, matching the operator-facing language used elsewhere in
 this tool.
