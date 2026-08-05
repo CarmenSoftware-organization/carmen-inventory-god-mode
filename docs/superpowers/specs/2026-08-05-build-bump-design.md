@@ -40,7 +40,19 @@ bun pm version [patch|minor|major|prerelease|from-git|<version>]
 - rewrite `package.json` `0.1.0 → 0.1.1`, preserving the existing formatting;
 - create a git commit (message customisable via `-m "… %s"`);
 - create tag `v0.1.1` — **annotated** (`git cat-file -t v0.1.1` returns `tag`);
-- refuse to run on a dirty tree: `error: Git working directory not clean.`
+- refuse to run on a dirty tree: `error: Git working directory not clean.`;
+- touch only `package.json` in the release commit.
+
+Two behaviours found by testing that this design depends on:
+
+- **`%s` substitutes the bare version, without a `v` prefix.**
+  `-m "chore(release): %s"` produces `chore(release): 0.1.1`. The `v` must be
+  written literally: **`-m "chore(release): v%s"`** → `chore(release): v0.1.1`.
+- **It commits first and tags second.** With `v0.1.1` already present,
+  `bun pm version patch` exits 1 with `error: Git tag failed` *after* having
+  rewritten and committed `package.json`, leaving a bumped release commit with
+  no tag. This is why the tag check happens up front rather than being left to
+  `git tag` to reject.
 
 `bun pm version` with **no increment argument** prints the current version and an
 increment table, then exits. It does **not** prompt.
@@ -99,7 +111,20 @@ Four units, each independently understandable:
   candidates: an existing `v0.1.1` must not block a `minor` bump to `v0.2.0`.
 - **`promptLevel(current, candidates): "patch" | "minor" | "major" | null`** —
   writes the menu to stdout and reads a line from stdin. Returns `null` when the
-  user cancels. Zero dependencies — Bun reads stdin directly.
+  user cancels or stdin reaches EOF. It **iterates the readline interface**
+  (`for await (const line of rl)`) rather than calling `rl.question()` per
+  attempt: with piped stdin, readline buffers every line at once, and a line
+  emitted while no `question()` is pending is silently dropped — so a
+  `bad input → retry` sequence loses the retry and the script exits without
+  bumping. This was observed, not theorised. Iterating also makes EOF the
+  natural end of the loop, so no `close`-handler workaround is needed.
+
+**Runtime APIs:** `node:child_process`, `node:fs` and `node:readline` —
+not the `Bun.*` globals. `tsconfig.json` includes `**/*.ts`, so `scripts/bump.ts`
+is typechecked by `bun run typecheck`, and neither `bun-types` nor `@types/bun`
+is installed — `Bun.spawnSync` would fail typecheck. `node:` APIs are typed by
+the `@types/node` already present and are the established pattern here
+(`lib/run-process.ts`). Still zero new dependencies.
 - **`main()`** — reads the current version from `package.json` and sequences
   everything, then shells out to `bun pm version`.
 
@@ -110,9 +135,9 @@ Four units, each independently understandable:
 2. assertBranchAndTree()            instant — fail before the user invests time
 3. promptLevel()                    user answers immediately, no waiting
 4. assertTagFree(chosen)            instant
-5. bun run typecheck                ~10-20s
-6. bun run lint
-7. bun pm version <level> -m "chore(release): %s"
+5. bun run --silent typecheck       ~10-20s
+6. bun run --silent lint
+7. bun pm version <level> -m "chore(release): v%s"
 8. print the push command as the suggested next step
 ```
 
