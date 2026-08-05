@@ -18,6 +18,21 @@ function git(...args: string[]): string {
   }
 }
 
+/**
+ * `git()` variant that returns `null` instead of exiting. Needed for checks
+ * that can fail legitimately — e.g. `@{upstream}` when no upstream is
+ * configured — where that failure must not abort the script. stderr is
+ * suppressed (unlike `git()`): failing here is an expected path with its own
+ * printed message, not an exceptional one worth showing git's raw error for.
+ */
+function tryGit(...args: string[]): string | null {
+  try {
+    return execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  } catch {
+    return null;
+  }
+}
+
 /** Pure. `null` when `current` is not MAJOR.MINOR.PATCH. */
 function nextVersions(current: string): Record<Level, string> | null {
   const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(current);
@@ -33,7 +48,13 @@ function nextVersions(current: string): Record<Level, string> | null {
 }
 
 function readVersion(): string {
-  const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { version?: unknown };
+  const raw = readFileSync("package.json", "utf8");
+  let pkg: { version?: unknown };
+  try {
+    pkg = JSON.parse(raw) as { version?: unknown };
+  } catch {
+    return fail("package.json อ่านเป็น JSON ไม่ได้");
+  }
   if (typeof pkg.version !== "string") fail("package.json ไม่มีฟิลด์ version");
   return pkg.version;
 }
@@ -58,7 +79,7 @@ async function promptLevel(
   console.log(`    1) patch  → ${next.patch}`);
   console.log(`    2) minor  → ${next.minor}`);
   console.log(`    3) major  → ${next.major}`);
-  console.log("    q) ยกเลิก");
+  console.log("    q) ยกเลิก (หรือกด Enter)");
 
   const answers: Record<string, Level> = {
     "1": "patch",
@@ -106,6 +127,29 @@ function assertBranchAndTree(): void {
 }
 
 /**
+ * Uses only already-fetched remote-tracking refs — never runs `git fetch`.
+ * No upstream configured is not an error and is skipped, not aborted. Being
+ * *ahead* of upstream is normal and does not abort either. Being *behind*
+ * means the tag would land on a commit that `git push` will reject as
+ * non-fast-forward — and the intuitive fix, `git pull --rebase`, moves the
+ * release commit out from under the already-created annotated tag. So this
+ * runs before the prompt, alongside the other instant guards.
+ */
+function assertUpToDate(): void {
+  const upstream = tryGit("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}");
+  if (upstream === null) {
+    console.log("▸ upstream .......... skip (ไม่มี upstream) ✓");
+    return;
+  }
+
+  const behind = Number(git("rev-list", "--count", "HEAD..@{upstream}"));
+  if (behind !== 0) {
+    fail(`local อยู่หลัง ${upstream} ${behind} commit — git pull ก่อนรันซ้ำ`);
+  }
+  console.log(`▸ upstream .......... up to date (${upstream}) ✓`);
+}
+
+/**
  * Checks only the chosen version — an existing v0.1.1 must not block a minor
  * bump to v0.2.0. Runs before any write because `bun pm version` commits first
  * and tags second: on a tag collision it exits 1 having already committed the
@@ -119,6 +163,14 @@ function assertTagFree(version: string): void {
 /**
  * Runs `bun run --silent <script>`, forwarding its output. Exits with its code
  * on failure. `--silent` suppresses bun's own `$ tsc --noEmit` echo line.
+ *
+ * A gate must never write a git-tracked file. `bun pm version` requires a
+ * clean tree and runs after every gate, with no clean-tree check in between —
+ * today that's safe only because `tsconfig.json`'s `"incremental": true`
+ * writes `tsconfig.tsbuildinfo`, which `.gitignore` excludes. A gate that
+ * dirtied a tracked file would make `bun pm version` fail at the very last
+ * step with "Git working directory not clean", after the prompt has already
+ * been answered.
  */
 function gate(script: string, done: string): void {
   const result = spawnSync("bun", ["run", "--silent", script], { stdio: "inherit" });
@@ -135,6 +187,7 @@ async function main(): Promise<void> {
   if (!next) fail(`อ่านเวอร์ชันจาก package.json ไม่ได้: ${current}`);
 
   assertBranchAndTree();
+  assertUpToDate();
 
   const level = parseLevelArg() ?? (await promptLevel(current, next));
   if (level === null) {
@@ -152,7 +205,13 @@ async function main(): Promise<void> {
     stdio: "inherit",
   });
   if (bump.status !== 0) {
-    fail(`bun pm version ล้มเหลว (exit ${bump.status ?? "?"}) — ตรวจ git log และ git tag ก่อนรันซ้ำ`);
+    fail(
+      `bun pm version ล้มเหลว (exit ${bump.status ?? "?"}) — package.json อาจถูก bump และ stage ไว้แล้ว ตรวจด้วย git status\n  กู้คืนด้วย: git restore --staged --worktree package.json`,
+    );
+  }
+
+  if (git("tag", "--list", `v${target}`) === "") {
+    fail(`bun pm version รันจบแล้วแต่ไม่พบ tag v${target} — ตรวจ git log และ git tag`);
   }
 
   console.log(`✓ v${target}`);
