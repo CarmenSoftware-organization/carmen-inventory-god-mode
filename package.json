@@ -8,6 +8,7 @@
     "dev:prod": "bun --env-file=.env.prod next dev",
     "dev:uat": "bun --env-file=.env.uat next dev",
     "build": "next build",
+    "build:bump": "bun scripts/bump.ts",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
