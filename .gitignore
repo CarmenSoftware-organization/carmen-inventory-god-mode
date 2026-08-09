@@ -46,3 +46,11 @@ next-env.d.ts
 
 # superpowers SDD scratch (ledger, briefs, reports, review diffs)
 /.superpowers/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+# Anchored: an unanchored `graft/` also swallows .claude/skills/graft/.
+/graft/
+
+# Claude Code: shared config is .claude/settings.json; these two are per-machine.
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

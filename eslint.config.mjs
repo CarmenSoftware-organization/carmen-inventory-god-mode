@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Gitignored scratch dir (remember plugin) — not repo code.
     ".remember/**",
+    // Agent-harness config & hooks — CommonJS by necessity, not app code.
+    ".claude/**",
   ]),
 ]);
 
