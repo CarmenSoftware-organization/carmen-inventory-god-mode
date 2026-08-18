@@ -132,14 +132,17 @@ function assertBranchAndTree(): void {
   // a draft into it and stops for the rewrite; the second run has to accept that
   // edit, and asking for a commit first would put a changelog commit straight on
   // main outside a PR. Instead `release()` stages it into the release commit.
-  const status = git("status", "--porcelain").split("\n").filter((line) => line !== "");
-  const dirty = status.filter((line) => line.slice(3) !== CHANGELOG_FILE);
-  if (dirty.length > 0) {
+  //
+  // The exclusion is a pathspec rather than a filter over the output: `git()`
+  // trims, which eats the leading status column of the first porcelain line and
+  // shifts any offset-based parse of it by one.
+  const dirty = git("status", "--porcelain", "--", ".", `:(exclude)${CHANGELOG_FILE}`);
+  if (dirty !== "") {
     console.error("✗ working tree ไม่สะอาด — commit หรือ stash ก่อน");
-    console.error(dirty.join("\n"));
+    console.error(dirty);
     process.exit(1);
   }
-  const edited = status.length > dirty.length;
+  const edited = git("status", "--porcelain", "--", CHANGELOG_FILE) !== "";
   console.log(`▸ working tree ..... clean${edited ? ` (ยกเว้น ${CHANGELOG_FILE})` : ""} ✓`);
 }
 
