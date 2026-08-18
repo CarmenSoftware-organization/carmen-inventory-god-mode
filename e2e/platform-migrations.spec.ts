@@ -15,6 +15,10 @@ test.skip(
   "platform package not present — set PLATFORM_PACKAGE_DIR or check out the sibling repo",
 );
 
+// The assertions below allow 60s for a subprocess run, which the default 30s test
+// budget could never honour — the test died before its own waits expired.
+test.setTimeout(120_000);
+
 test("runs read-only prisma migration status and streams output", async ({
   page,
 }) => {
@@ -31,9 +35,11 @@ test("runs read-only prisma migration status and streams output", async ({
 
   // The live log <pre role="log"> should appear and the run should finish.
   await expect(page.getByRole("log")).toBeVisible({ timeout: 60_000 });
+  // Match the app's own summary line, which ends in "on schema <name>". The old regex
+  // also matched the subprocess output inside <pre role="log">, and two hits trip
+  // strict mode. Scoping by role="status" would not help: the persistent live-target
+  // bar carries that role too.
   await expect(
-    page.getByText(
-      /completed \(exit 0\)|Database schema is up to date|following migration/i,
-    ),
+    page.getByText(/completed \(exit 0\) on schema/i),
   ).toBeVisible({ timeout: 60_000 });
 });
