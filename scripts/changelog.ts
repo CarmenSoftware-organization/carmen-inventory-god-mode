@@ -88,8 +88,50 @@ export function withUnreleasedBody(markdown: string, body: string): string {
   return markdown.slice(0, start) + body + markdown.slice(end);
 }
 
-const COMMENT_LINE = /^\s*<!--.*-->\s*$/;
 const HEADING_LINE = /^\s*#{1,6}\s/;
+
+/**
+ * Flags each line that holds nothing but an HTML comment, carrying comment
+ * state across lines so a `<!--` that closes further down still covers the
+ * lines between. Done by scanning for the two delimiters rather than matching a
+ * comment per line with a regex: a per-line pattern reads the middle of a
+ * multi-line comment as prose, which would both block a redraft and carry the
+ * placeholder down into a released version.
+ */
+function commentLines(lines: string[]): boolean[] {
+  const flags: boolean[] = [];
+  let open = false;
+
+  for (const line of lines) {
+    let rest = line;
+    let outside = "";
+    let touched = open;
+
+    while (rest !== "") {
+      if (open) {
+        const close = rest.indexOf("-->");
+        if (close === -1) break;
+        open = false;
+        rest = rest.slice(close + 3);
+        continue;
+      }
+
+      const start = rest.indexOf("<!--");
+      if (start === -1) {
+        outside += rest;
+        break;
+      }
+      outside += rest.slice(0, start);
+      open = true;
+      touched = true;
+      rest = rest.slice(start + 4);
+    }
+
+    flags.push(touched && outside.trim() === "");
+  }
+
+  return flags;
+}
 
 /**
  * Whether a section body says anything yet: any line that is not blank, not a
@@ -98,9 +140,11 @@ const HEADING_LINE = /^\s*#{1,6}\s/;
  * treating those as empty would let a redraft overwrite finished notes.
  */
 export function hasEntries(body: string): boolean {
-  return body
-    .split("\n")
-    .some((line) => line.trim() !== "" && !COMMENT_LINE.test(line) && !HEADING_LINE.test(line));
+  const lines = body.split("\n");
+  const comments = commentLines(lines);
+  return lines.some(
+    (line, index) => line.trim() !== "" && !comments[index] && !HEADING_LINE.test(line),
+  );
 }
 
 /**
@@ -111,9 +155,10 @@ export function hasEntries(body: string): boolean {
  */
 function splitComments(body: string): { comments: string[]; rest: string } {
   const lines = body.split("\n");
+  const flags = commentLines(lines);
   return {
-    comments: lines.filter((line) => COMMENT_LINE.test(line)),
-    rest: lines.filter((line) => !COMMENT_LINE.test(line)).join("\n"),
+    comments: lines.filter((_, index) => flags[index]),
+    rest: lines.filter((_, index) => !flags[index]).join("\n"),
   };
 }
 

@@ -161,6 +161,19 @@ test("withDraft puts generated entries under the placeholder comment, replacing 
   expect(next).toContain("- เดิม (#23)");
 });
 
+test("a comment spanning lines stays in Unreleased instead of shipping in the release", () => {
+  const md = doc("\n<!-- บรรทัดหนึ่ง\n     บรรทัดสอง -->\n\n### Fixed\n\n- พร้อมปล่อย (#30)\n");
+  const next = promote(md, "0.4.0", "2026-08-19");
+
+  expect(unreleasedBody(next)).toContain("บรรทัดสอง");
+  expect(next.slice(next.indexOf("## [0.4.0]"))).not.toContain("บรรทัดหนึ่ง");
+});
+
+test("hasEntries ignores a comment spanning lines", () => {
+  expect(hasEntries("\n<!-- หนึ่ง\n  สอง -->\n")).toBe(false);
+  expect(hasEntries("\n<!-- หนึ่ง\n  สอง -->\n\n- ของจริง (#30)\n")).toBe(true);
+});
+
 test("promote refuses a version that is already in the file", () => {
   const md = doc("\n### Fixed\n\n- พร้อมปล่อย (#30)\n");
   expect(() => promote(md, "0.3.0", "2026-08-19")).toThrow(/0\.3\.0/);
