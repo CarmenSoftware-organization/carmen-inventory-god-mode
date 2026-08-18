@@ -54,3 +54,6 @@ next-env.d.ts
 # Claude Code: shared config is .claude/settings.json; these two are per-machine.
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
