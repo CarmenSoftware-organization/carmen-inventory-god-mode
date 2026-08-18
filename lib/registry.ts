@@ -11,7 +11,7 @@ export async function listBusinessUnits(): Promise<BusinessUnit[]> {
     const rows = (await getSql().unsafe(
       `SELECT id::text, cluster_id::text AS cluster_id, code, name,
               COALESCE(is_active, true) AS is_active,
-              db_connection->>'schema' AS tenant_schema
+              db_schema AS tenant_schema
        FROM ${reg} ORDER BY code`,
     )) as unknown as {
       id: string; code: string; name: string; cluster_id: string | null;
@@ -30,7 +30,7 @@ export async function listBusinessUnits(): Promise<BusinessUnit[]> {
 export async function resolveTenantSchema(businessUnitId: string): Promise<string | null> {
   const reg = qualified(env().systemSchemaName, "tb_business_unit");
   const rows = await getSql().unsafe(
-    `SELECT db_connection->>'schema' AS tenant_schema FROM ${reg} WHERE id = $1::uuid`,
+    `SELECT db_schema AS tenant_schema FROM ${reg} WHERE id = $1::uuid`,
     [businessUnitId],
   );
   return rows[0]?.tenant_schema ?? null;
@@ -71,8 +71,8 @@ export async function listClusters(): Promise<Cluster[]> {
 export async function resolveTenantSchemasForCluster(clusterId: string): Promise<string[]> {
   const bu = qualified(env().systemSchemaName, "tb_business_unit");
   const rows = (await getSql().unsafe(
-    `SELECT DISTINCT db_connection->>'schema' AS tenant_schema
-     FROM ${bu} WHERE cluster_id = $1::uuid AND db_connection->>'schema' IS NOT NULL`,
+    `SELECT DISTINCT db_schema AS tenant_schema
+     FROM ${bu} WHERE cluster_id = $1::uuid AND db_schema IS NOT NULL`,
     [clusterId],
   )) as unknown as { tenant_schema: string }[];
   return rows.map((r) => r.tenant_schema);

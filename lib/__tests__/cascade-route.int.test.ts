@@ -29,7 +29,7 @@ beforeAll(async () => {
     CREATE TABLE "CARMEN_SYSTEM".tb_business_unit (
       id uuid primary key default gen_random_uuid(),
       cluster_id uuid,
-      db_connection jsonb
+      db_schema varchar
     );
   `);
   const { ensureAuditTable } = await import("@/lib/audit");
@@ -86,14 +86,13 @@ test("single cluster delete with dropSchema drops tenant schemas and redirects t
   const sql = getSql();
 
   // Create a cluster and a business unit whose tenant schema we want dropped.
-  // resolveTenantSchemasForCluster queries tb_business_unit.cluster_id + db_connection->>'schema'.
+  // resolveTenantSchemasForCluster queries tb_business_unit.cluster_id + db_schema.
   const [{ id: clusterId }] = await sql.unsafe<{ id: string }[]>(
     `INSERT INTO "CARMEN_SYSTEM".tb_cluster DEFAULT VALUES RETURNING id::text`,
   );
-  // Embed the JSON object as a literal (not a parameterized string) to avoid double-encoding by postgres.js.
   await sql.unsafe(
-    `INSERT INTO "CARMEN_SYSTEM".tb_business_unit (cluster_id, db_connection)
-     VALUES ($1::uuid, '{"schema":"test_cluster_tenant"}'::jsonb)`,
+    `INSERT INTO "CARMEN_SYSTEM".tb_business_unit (cluster_id, db_schema)
+     VALUES ($1::uuid, 'test_cluster_tenant')`,
     [clusterId],
   );
   await sql.unsafe(`CREATE SCHEMA "test_cluster_tenant"`);
