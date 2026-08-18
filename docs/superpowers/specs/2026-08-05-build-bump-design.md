@@ -97,6 +97,12 @@ typecheck/lint gate, and an interactive level prompt.
 
 `scripts/` does not exist yet and is created by this change.
 
+> **Superseded 2026-08-19.** Changelog generation, listed out of scope below,
+> was added: `CHANGELOG.md`, the draft/promote helpers in `scripts/changelog.ts`
+> and their tests, a changelog guard that stops the first run for a rewrite, and
+> a release step that commits and tags here instead of through
+> `bun pm version`'s git mode. See the entry in `CLAUDE.md`.
+
 ### Structure of `scripts/bump.ts`
 
 Five units, each independently understandable:
@@ -229,7 +235,8 @@ rewritten, which would leave the working tree dirty.
 
 ### Out of scope
 
-- Pushing, `gh release create`, CHANGELOG generation.
+- Pushing and `gh release create`. (CHANGELOG generation was in this list until
+  2026-08-19 — see the note under Files.)
 - Running the test suite or `next build` as part of the gate.
 - Displaying the version anywhere in the app UI.
 - Prerelease / `--preid` support — `bun pm version prerelease --preid beta` is

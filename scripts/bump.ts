@@ -1,9 +1,20 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { createInterface } from "node:readline";
+
+import {
+  collectEntries,
+  hasEntries,
+  promote,
+  renderDraft,
+  unreleasedBody,
+  withDraft,
+} from "./changelog";
 
 const LEVELS = ["patch", "minor", "major"] as const;
 type Level = (typeof LEVELS)[number];
+
+const CHANGELOG_FILE = "CHANGELOG.md";
 
 function fail(message: string): never {
   console.error(`✗ ${message}`);
@@ -117,13 +128,73 @@ function assertBranchAndTree(): void {
   }
   console.log("▸ branch ........... main ✓");
 
-  const dirty = git("status", "--porcelain");
+  // CHANGELOG.md is the one file allowed to be dirty here. The first run writes
+  // a draft into it and stops for the rewrite; the second run has to accept that
+  // edit, and asking for a commit first would put a changelog commit straight on
+  // main outside a PR. Instead `release()` stages it into the release commit.
+  //
+  // The exclusion is a pathspec rather than a filter over the output: `git()`
+  // trims, which eats the leading status column of the first porcelain line and
+  // shifts any offset-based parse of it by one.
+  const dirty = git("status", "--porcelain", "--", ".", `:(exclude)${CHANGELOG_FILE}`);
   if (dirty !== "") {
     console.error("✗ working tree ไม่สะอาด — commit หรือ stash ก่อน");
     console.error(dirty);
     process.exit(1);
   }
-  console.log("▸ working tree ..... clean ✓");
+  const edited = git("status", "--porcelain", "--", CHANGELOG_FILE) !== "";
+  console.log(`▸ working tree ..... clean${edited ? ` (ยกเว้น ${CHANGELOG_FILE})` : ""} ✓`);
+}
+
+/** Release dates are UTC, so a tag cut anywhere carries the same date. */
+function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function readChangelog(): string {
+  try {
+    return readFileSync(CHANGELOG_FILE, "utf8");
+  } catch {
+    return fail(`ไม่พบ ${CHANGELOG_FILE}`);
+  }
+}
+
+/**
+ * The changelog gate — and the only guard that writes. An empty `[Unreleased]`
+ * is filled with a draft built from the commits since the last tag, and the run
+ * stops there: those lines are commit subjects, not release notes, and the
+ * rewrite is the point. Runs before the prompt, with the other instant guards.
+ */
+function assertChangelogReady(): void {
+  const markdown = readChangelog();
+
+  let body: string;
+  try {
+    body = unreleasedBody(markdown);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+
+  if (hasEntries(body)) {
+    console.log("▸ changelog ........ [Unreleased] พร้อม ✓");
+    return;
+  }
+
+  const lastTag = tryGit("describe", "--tags", "--abbrev=0");
+  const range = lastTag === null ? "HEAD" : `${lastTag}..HEAD`;
+  const { entries, skipped } = collectEntries(range, git);
+  if (entries.length === 0) {
+    fail(
+      `[Unreleased] ว่าง และไม่มี commit ที่เข้าเกณฑ์ใน ${range} (ข้าม ${skipped}) — เขียนรายการเองก่อนตัดรุ่น`,
+    );
+  }
+
+  writeFileSync(CHANGELOG_FILE, withDraft(markdown, renderDraft(entries)));
+  const dropped = skipped === 0 ? "" : ` (ข้าม ${skipped} commit)`;
+  console.log(`▸ changelog ........ เขียนร่าง ${entries.length} รายการจาก ${range}${dropped}`);
+  fail(
+    `[Unreleased] ใน ${CHANGELOG_FILE} เป็นร่างดิบจาก commit — แก้ให้เป็นภาษาคนแล้วรัน build:bump ซ้ำ\n  ไม่ต้อง commit ไฟล์นี้: release commit จะรวมให้เอง`,
+  );
 }
 
 /**
@@ -164,13 +235,11 @@ function assertTagFree(version: string): void {
  * Runs `bun run --silent <script>`, forwarding its output. Exits with its code
  * on failure. `--silent` suppresses bun's own `$ tsc --noEmit` echo line.
  *
- * A gate must never write a git-tracked file. `bun pm version` requires a
- * clean tree and runs after every gate, with no clean-tree check in between —
- * today that's safe only because `tsconfig.json`'s `"incremental": true`
- * writes `tsconfig.tsbuildinfo`, which `.gitignore` excludes. A gate that
- * dirtied a tracked file would make `bun pm version` fail at the very last
- * step with "Git working directory not clean", after the prompt has already
- * been answered.
+ * A gate must never write a git-tracked file: `release()` stages `package.json`
+ * and `CHANGELOG.md` without re-checking the tree, so anything a gate dirtied
+ * would be left behind uncommitted next to a finished release. Today that holds
+ * only because `tsconfig.json`'s `"incremental": true` writes
+ * `tsconfig.tsbuildinfo`, which `.gitignore` excludes.
  */
 function gate(script: string, done: string): void {
   const result = spawnSync("bun", ["run", "--silent", script], { stdio: "inherit" });
@@ -181,6 +250,45 @@ function gate(script: string, done: string): void {
   console.log(done);
 }
 
+/** Runs a git step that mutates the repo, showing git's own output, or fails with how to undo it. */
+function gitStep(args: string[], recovery: string): void {
+  const result = spawnSync("git", args, { stdio: ["ignore", "inherit", "inherit"] });
+  if (result.status === 0) return;
+  fail(`git ${args[0]} ล้มเหลว\n  กู้คืนด้วย: ${recovery}`);
+}
+
+/**
+ * Bumps `package.json`, moves `[Unreleased]` into the new version's heading and
+ * lands both as one commit plus its tag.
+ *
+ * `bun pm version` runs with `--no-git-tag-version` and the commit is made here
+ * instead: it refuses to run at all while `CHANGELOG.md` carries the edited
+ * draft — a staged file still counts as unclean — and the changelog entry has to
+ * be inside the commit the tag points at, not a commit after it.
+ */
+function release(level: Level, version: string): void {
+  const bump = spawnSync("bun", ["pm", "version", level, "--no-git-tag-version"], {
+    stdio: "inherit",
+  });
+  if (bump.status !== 0) {
+    fail(
+      `bun pm version ล้มเหลว (exit ${bump.status ?? "?"}) — package.json อาจถูก bump ไว้แล้ว ตรวจด้วย git status\n  กู้คืนด้วย: git restore package.json`,
+    );
+  }
+
+  const undo = `git restore package.json ${CHANGELOG_FILE}`;
+  try {
+    writeFileSync(CHANGELOG_FILE, promote(readChangelog(), version, todayUtc()));
+  } catch (error) {
+    fail(`${error instanceof Error ? error.message : String(error)}\n  กู้คืนด้วย: ${undo}`);
+  }
+
+  const tag = `v${version}`;
+  gitStep(["add", "--", "package.json", CHANGELOG_FILE], undo);
+  gitStep(["commit", "-m", `chore(release): ${tag}`], `git restore --staged --worktree . ; ${undo}`);
+  gitStep(["tag", "-a", tag, "-m", tag], "git reset --hard HEAD~1");
+}
+
 async function main(): Promise<void> {
   const current = readVersion();
   const next = nextVersions(current);
@@ -188,6 +296,7 @@ async function main(): Promise<void> {
 
   assertBranchAndTree();
   assertUpToDate();
+  assertChangelogReady();
 
   const level = parseLevelArg() ?? (await promptLevel(current, next));
   if (level === null) {
@@ -201,22 +310,12 @@ async function main(): Promise<void> {
   gate("typecheck", "▸ typecheck ........ ✓");
   gate("lint", "▸ lint ............. ✓");
 
-  const bump = spawnSync("bun", ["pm", "version", level, "-m", "chore(release): v%s"], {
-    stdio: "inherit",
-  });
-  if (bump.status !== 0) {
-    fail(
-      `bun pm version ล้มเหลว (exit ${bump.status ?? "?"}) — package.json อาจถูก bump และ stage ไว้แล้ว ตรวจด้วย git status\n  กู้คืนด้วย: git restore --staged --worktree package.json`,
-    );
-  }
-
-  if (git("tag", "--list", `v${target}`) === "") {
-    fail(`bun pm version รันจบแล้วแต่ไม่พบ tag v${target} — ตรวจ git log และ git tag`);
-  }
+  release(level, target);
 
   console.log(`✓ v${target}`);
   console.log(`  commit  chore(release): v${target}`);
   console.log(`  tag     v${target} (annotated)`);
+  console.log(`  files   package.json, ${CHANGELOG_FILE}`);
   console.log("");
   console.log(`→ ขั้นต่อไป: git push origin main && git push origin v${target}`);
 }
