@@ -12,6 +12,7 @@ test("catalog exposes the expected operation ids across groups", () => {
     "seed-currency-iso", "seed-permission", "seed-platform-super-admin",
     "seed-platform-role", "seed-report-template-upload",
     "check-permission", "check-platform-permission", "check-platform-role-permission", "check-endpoint-permission",
+    "check-api-system-permission",
     "migrate-reset",
   ]));
   expect(findOp("prisma-status")?.readonly).toBe(true);
