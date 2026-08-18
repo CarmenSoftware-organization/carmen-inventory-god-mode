@@ -88,12 +88,20 @@ export function withUnreleasedBody(markdown: string, body: string): string {
   return markdown.slice(0, start) + body + markdown.slice(end);
 }
 
-/** A section counts as written only once it carries a bullet. */
-export function hasEntries(body: string): boolean {
-  return body.split("\n").some((line) => line.trimStart().startsWith("- "));
-}
-
 const COMMENT_LINE = /^\s*<!--.*-->\s*$/;
+const HEADING_LINE = /^\s*#{1,6}\s/;
+
+/**
+ * Whether a section body says anything yet: any line that is not blank, not a
+ * comment and not a bare heading. Bullets do not get to be the test — this
+ * repo's release notes are written as bold titles followed by prose, and
+ * treating those as empty would let a redraft overwrite finished notes.
+ */
+export function hasEntries(body: string): boolean {
+  return body
+    .split("\n")
+    .some((line) => line.trim() !== "" && !COMMENT_LINE.test(line) && !HEADING_LINE.test(line));
+}
 
 /**
  * Separates the HTML comments in a section body — the "write the draft here"

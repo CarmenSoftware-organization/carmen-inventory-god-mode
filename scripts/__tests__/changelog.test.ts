@@ -114,6 +114,10 @@ test("hasEntries sees bullets but not blank space or comments", () => {
   expect(hasEntries("\n### Fixed\n\n- อะไรสักอย่าง (#30)\n")).toBe(true);
 });
 
+test("hasEntries counts prose entries, which is how this repo's notes are written", () => {
+  expect(hasEntries("\n### Added\n\n**หัวข้อหนึ่ง** (#26)\nคำอธิบายว่าทำไม\n")).toBe(true);
+});
+
 test("withUnreleasedBody swaps the section and leaves the rest of the file alone", () => {
   const md = doc("\n");
   const next = withUnreleasedBody(md, "\n### Added\n\n- ใหม่ (#31)\n\n");
