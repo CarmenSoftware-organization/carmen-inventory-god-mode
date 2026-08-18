@@ -11,6 +11,14 @@
 
 <!-- build:bump เขียนร่างจาก commit ไว้ตรงนี้ แก้ให้เป็นภาษาคนก่อนตัดรุ่น -->
 
+## [0.3.1] — 2026-08-18
+
+### Internal
+
+- The release commit is carved out of the PR-only rule (#24): `bun run build:bump` commits and tags
+  on `main` and is pushed directly, because routing it through a PR would leave the tag pointing at
+  the branch commit rather than at anything on `main`.
+
 ## [0.3.0] — 2026-08-18
 
 Every god-mode page that reads the business-unit registry was crashing. Fixing that surfaced a
