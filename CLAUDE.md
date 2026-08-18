@@ -6,6 +6,10 @@ Admin tool over a **live** Postgres; every write is permanent and `.env.local`
 points at the real dev DB — treat cascade delete / `DROP SCHEMA` as prod data.
 (Setup & safety: README.md.)
 
+## Git
+- **Every change reaches `main` through a branch and a PR** — `fix/…` / `feature/…`, then `gh pr merge` once checks pass. No direct commit or push to `main`, chores and one-line config edits included; a request phrased as "commit and push" still means branch + PR.
+- No `develop` branch exists: PRs target `main`. `UAT` is a separate environment branch, never a PR base unless asked.
+
 ## Commands
 - `bun run dev`/`start` — port **3305** (not 3000), set via `PORT` in the env file. `bun run dev` = `dev:local` (`.env.local`); `bun run dev:prod` uses `.env.prod`; `dev:uat` uses `.env.uat`. `bun run test` (Vitest — never `bun test`), `bun run typecheck`, `bun run lint`.
 - E2E: `node_modules/.bin/playwright test` (auto-starts/reuses the dev server). `bun <file.ts>` auto-loads `.env.local`.
