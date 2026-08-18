@@ -56,3 +56,15 @@ test("per-row delete and open links preserved", async () => {
     `/CARMEN_SYSTEM/tb_business_unit/delete?pk=${encodeURIComponent(JSON.stringify({ id: "11" }))}`,
   );
 });
+
+test("a business unit on another database is badged in the schema column", async () => {
+  const { BusinessUnitsTable } = await import("@/components/business-units-table");
+  render(<BusinessUnitsTable bus={bus} system="CARMEN_SYSTEM" poolMismatchIds={["11"]} />);
+  expect(screen.getByText("other database")).toBeInTheDocument();
+});
+
+test("no badge when every business unit sits on the connected database", async () => {
+  const { BusinessUnitsTable } = await import("@/components/business-units-table");
+  render(<BusinessUnitsTable bus={bus} system="CARMEN_SYSTEM" />);
+  expect(screen.queryByText("other database")).not.toBeInTheDocument();
+});

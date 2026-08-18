@@ -17,6 +17,7 @@ export function ConfirmDelete({
   isBusinessUnit,
   tenantSchema,
   orphanSchemas,
+  poolWarning,
   requiredPhrase,
 }: {
   schema: string;
@@ -26,6 +27,8 @@ export function ConfirmDelete({
   isBusinessUnit: boolean;
   tenantSchema: string | null;
   orphanSchemas?: string[];
+  /** Set when the registry points this target at a database other than the connected one. */
+  poolWarning?: string | null;
   requiredPhrase: string;
 }) {
   const { state, start } = useOperationStream();
@@ -85,11 +88,19 @@ export function ConfirmDelete({
         </TBody>
       </Table>
 
+      {/* Registry points somewhere this instance is not connected to */}
+      {poolWarning && (
+        <Alert variant="danger" title="Tenant schema lives on another database">
+          {poolWarning} Dropping the schema is disabled; deleting the registry row is still allowed.
+        </Alert>
+      )}
+
       {/* Business unit schema drop */}
       {isBusinessUnit && tenantSchema && (
-        <label className="flex items-center gap-3 rounded-md border border-warning-border bg-warning-subtle p-3 text-sm text-warning-subtle-foreground">
+        <label className="flex items-center gap-3 rounded-md border border-warning-border bg-warning-subtle p-3 text-sm text-warning-subtle-foreground aria-disabled:opacity-60" aria-disabled={!!poolWarning}>
           <Checkbox
-            checked={dropSchema}
+            checked={dropSchema && !poolWarning}
+            disabled={!!poolWarning}
             onChange={(e) => setDropSchema(e.target.checked)}
           />
           <span>
@@ -102,9 +113,10 @@ export function ConfirmDelete({
       {/* Orphan schema drop */}
       {orphanSchemas && orphanSchemas.length > 0 && (
         <div className="space-y-2">
-          <label className="flex items-start gap-3 rounded-md border border-warning-border bg-warning-subtle p-3 text-sm text-warning-subtle-foreground">
+          <label className="flex items-start gap-3 rounded-md border border-warning-border bg-warning-subtle p-3 text-sm text-warning-subtle-foreground aria-disabled:opacity-60" aria-disabled={!!poolWarning}>
             <Checkbox
-              checked={dropSchema}
+              checked={dropSchema && !poolWarning}
+              disabled={!!poolWarning}
               onChange={(e) => setDropSchema(e.target.checked)}
             />
             <span>

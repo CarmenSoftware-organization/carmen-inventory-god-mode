@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/session";
 import { executeCascade, executeCascadeMany } from "@/lib/cascade";
 import { requiredPhrase, phraseMatches } from "@/lib/delete-confirm";
 import { resolveTenantSchema, resolveTenantSchemasForCluster } from "@/lib/registry";
+import { loadPoolsForBusinessUnits, loadPoolsForCluster, tenantDropBlockReason } from "@/lib/db-pool";
 import { streamOperation } from "@/lib/progress";
 
 export const runtime = "nodejs";
@@ -44,6 +45,16 @@ export async function POST(request: Request): Promise<Response> {
   });
   if (!phraseMatches(confirm ?? "", phrase)) {
     return Response.json({ error: `Confirmation text must equal "${phrase}"` }, { status: 400 });
+  }
+
+  // A tenant schema is resolved by name, but it only lives on this connection when the
+  // registry points the business unit at this host. Refuse the drop otherwise.
+  if (dropSchemas.length > 0) {
+    const pools = isBusinessUnit
+      ? await loadPoolsForBusinessUnits([String(pks[0].id)])
+      : await loadPoolsForCluster(String(pks[0].id));
+    const blocked = tenantDropBlockReason(pools);
+    if (blocked) return Response.json({ error: blocked }, { status: 409 });
   }
 
   const redirect = isBusinessUnit

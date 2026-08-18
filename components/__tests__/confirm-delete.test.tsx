@@ -55,3 +55,23 @@ test("stamping the seal POSTs the normalized payload to the cascade-delete route
     schema: "CARMEN_SYSTEM", table: "tb_cluster", pks: [{ id: "1" }], dropSchema: false, confirm: "DELETE",
   });
 });
+
+test("a pool warning blocks the schema drop while leaving the row delete available", async () => {
+  const { ConfirmDelete } = await import("@/components/confirm-delete");
+  render(<ConfirmDelete schema="CARMEN_SYSTEM" table="tb_business_unit" pkJson={JSON.stringify({ id: "1" })}
+    radius={radius} isBusinessUnit tenantSchema="tenant_elsewhere"
+    poolWarning="T02 (tenant_elsewhere) → prod.example.com:5432/carmen"
+    requiredPhrase="DELETE" />);
+  // The blast-radius callout is also role="alert", so match this one by its title.
+  expect(screen.getByText("Tenant schema lives on another database")).toBeInTheDocument();
+  expect(screen.getByText(/prod\.example\.com:5432\/carmen/)).toBeInTheDocument();
+  expect(screen.getByRole("checkbox")).toBeDisabled();
+});
+
+test("without a pool warning the schema drop stays operable", async () => {
+  const { ConfirmDelete } = await import("@/components/confirm-delete");
+  render(<ConfirmDelete schema="CARMEN_SYSTEM" table="tb_business_unit" pkJson={JSON.stringify({ id: "1" })}
+    radius={radius} isBusinessUnit tenantSchema="tenant_here" requiredPhrase="DELETE" />);
+  expect(screen.queryByText("Tenant schema lives on another database")).not.toBeInTheDocument();
+  expect(screen.getByRole("checkbox")).toBeEnabled();
+});

@@ -5,11 +5,20 @@ import { listBusinessUnits, listSelectableSchemas } from "@/lib/registry";
 import { Button } from "@/components/ui/button";
 import { PageHeader, SectionLabel } from "@/components/ui/page-header";
 import { isProtectedSchema } from "@/lib/drop-schema";
+import { loadAllPools, poolMatches, parseConnectionIdentity } from "@/lib/db-pool";
+import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
 export default async function SchemasPage() {
-  const [bus, sel] = await Promise.all([listBusinessUnits(), listSelectableSchemas()]);
+  const [bus, sel, pools] = await Promise.all([
+    listBusinessUnits(), listSelectableSchemas(), loadAllPools(),
+  ]);
+  // pools === null on a registry that predates the pool split: nothing to flag.
+  const connected = parseConnectionIdentity(env().databaseUrl);
+  const poolMismatchIds = (pools ?? [])
+    .filter((p) => p.dbSchema && !poolMatches(p.pool, connected))
+    .map((p) => p.id);
   return (
     <div>
       <PageHeader
@@ -33,7 +42,7 @@ export default async function SchemasPage() {
         {/* Business units */}
         <section>
           <SectionLabel>Business units</SectionLabel>
-          <BusinessUnitsTable bus={bus} system={sel.system} />
+          <BusinessUnitsTable bus={bus} system={sel.system} poolMismatchIds={poolMismatchIds} />
         </section>
 
         {/* All schemas */}

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Trash2, ArrowRight } from "lucide-react";
+import { Trash2, ArrowRight, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { BusinessUnit } from "@/lib/registry";
 import { Table, THead, TBody, TR, Th, Td } from "@/components/ui/table";
@@ -13,10 +13,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 export function BusinessUnitsTable({
   bus,
   system,
+  poolMismatchIds = [],
 }: {
   bus: BusinessUnit[];
   system: string;
+  /** Business units whose registry pool is not the database this instance is connected to. */
+  poolMismatchIds?: string[];
 }) {
+  const mismatched = new Set(poolMismatchIds);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   function buKey(b: BusinessUnit): string {
@@ -108,6 +112,12 @@ export function BusinessUnitsTable({
                   <Td className="font-mono text-xs">
                     {b.tenantSchema ?? (
                       <span className="text-foreground-subtle">none</span>
+                    )}
+                    {mismatched.has(b.id) && (
+                      <Badge variant="warning" className="ml-2 font-sans">
+                        <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                        other database
+                      </Badge>
                     )}
                   </Td>
                   <Td className="w-28 text-right">

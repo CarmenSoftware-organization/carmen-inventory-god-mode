@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { env } from "@/lib/env";
 import { computeBlastRadius } from "@/lib/cascade";
 import { resolveTenantSchema, resolveTenantSchemasForCluster } from "@/lib/registry";
+import { loadPoolsForBusinessUnits, loadPoolsForCluster, tenantDropBlockReason } from "@/lib/db-pool";
 import { requiredPhrase } from "@/lib/delete-confirm";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { SchemaBanner } from "@/components/schema-banner";
@@ -19,6 +20,11 @@ export default async function DeletePage({
   const tenantSchema = isBusinessUnit ? await resolveTenantSchema(String(pk.id)) : null;
   const isCluster = schema === env().systemSchemaName && table === "tb_cluster";
   const orphanSchemas = isCluster ? await resolveTenantSchemasForCluster(String(pk.id)) : undefined;
+  const poolWarning = isBusinessUnit
+    ? tenantDropBlockReason(await loadPoolsForBusinessUnits([String(pk.id)]))
+    : isCluster
+    ? tenantDropBlockReason(await loadPoolsForCluster(String(pk.id)))
+    : null;
   const radius = await computeBlastRadius(schema, table, pk);
   return (
     <div className="space-y-4">
@@ -28,7 +34,7 @@ export default async function DeletePage({
       </h1>
       <ConfirmDelete schema={schema} table={table} pkJson={JSON.stringify(pk)} radius={radius}
         isBusinessUnit={isBusinessUnit} tenantSchema={tenantSchema}
-        orphanSchemas={orphanSchemas}
+        orphanSchemas={orphanSchemas} poolWarning={poolWarning}
         requiredPhrase={requiredPhrase({ isBusinessUnit, dropSchema: null })} />
     </div>
   );
