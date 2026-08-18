@@ -1,5 +1,6 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import postgres from "postgres";
+import { login } from "./login";
 
 // Happy-path e2e for the streaming cascade-delete flow. Fully self-contained:
 // it seeds a throwaway, already-soft-deleted cluster directly in the DB, drives
@@ -29,14 +30,6 @@ async function cleanup(): Promise<void> {
   }
 }
 
-async function login(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.fill('input[name="actor"]', "e2e");
-  await page.fill('input[name="secret"]', process.env.GOD_MODE_PASSWORD!);
-  await page.click('button[type="submit"]');
-  await expect(page).toHaveURL(/\/schemas/);
-}
-
 test.beforeAll(cleanup);
 test.afterAll(cleanup);
 
@@ -62,7 +55,7 @@ test("hard-deleting a soft-deleted cluster streams progress and redirects to /cl
 
   // Open the Deleted tab and confirm the seeded cluster is in the recycle bin.
   await page.goto("/clusters");
-  await page.getByRole("button", { name: /^Deleted/ }).click();
+  await page.getByRole("tab", { name: /^Deleted/ }).click();
   const row = page.getByRole("row").filter({ hasText: code });
   await expect(row).toBeVisible();
 
@@ -72,7 +65,13 @@ test("hard-deleting a soft-deleted cluster streams progress and redirects to /cl
 
   // Confirm and submit — this drives the streaming /api/ops/cascade-delete route.
   await page.locator('input[name="confirm"]').fill("DELETE");
-  await page.getByRole("button", { name: "Permanently delete" }).click();
+  // SealConfirm is a press-and-hold ceremony (~700ms), not a click: mousedown starts
+  // the hold and mouseup cancels it, so a plain click always releases too early.
+  const seal = page.getByRole("button", { name: "Confirm and permanently delete" });
+  await seal.hover();
+  await page.mouse.down();
+  await page.waitForTimeout(1_000);
+  await page.mouse.up();
 
   // The redirect to /clusters only happens via the stream's `done` event, so
   // landing here proves the full stream → done → navigate path completed. And
@@ -81,7 +80,7 @@ test("hard-deleting a soft-deleted cluster streams progress and redirects to /cl
   await expect(page.getByText(/rolled back/i)).toHaveCount(0);
 
   // The cluster is gone from the recycle bin UI...
-  await page.getByRole("button", { name: /^Deleted/ }).click();
+  await page.getByRole("tab", { name: /^Deleted/ }).click();
   await expect(page.getByText(code)).toHaveCount(0);
 
   // ...and from the database.

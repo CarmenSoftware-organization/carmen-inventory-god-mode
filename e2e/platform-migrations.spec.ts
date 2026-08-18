@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { login } from "./login";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -13,19 +14,6 @@ test.skip(
   !fs.existsSync(path.join(pkgDir, "package.json")),
   "platform package not present — set PLATFORM_PACKAGE_DIR or check out the sibling repo",
 );
-
-async function login(page: Page): Promise<void> {
-  await page.goto("/login");
-  // If the gateway tab is active (BACKEND_API_BASE_URL set), switch to the
-  // shared-secret tab so input[name="actor"] / input[name="secret"] are visible.
-  // The tab has role="tab" (not button), so getByRole("tab") is required.
-  const sharedSecretTab = page.getByRole("tab", { name: /Shared secret/i });
-  await sharedSecretTab.click({ timeout: 3_000 }).catch(() => { /* gateway disabled: no shared-secret tab, already on the secret form */ });
-  await page.fill('input[name="actor"]', "e2e");
-  await page.fill('input[name="secret"]', process.env.GOD_MODE_PASSWORD!);
-  await page.click('button[type="submit"]');
-  await expect(page).toHaveURL(/\/schemas/);
-}
 
 test("runs read-only prisma migration status and streams output", async ({
   page,
