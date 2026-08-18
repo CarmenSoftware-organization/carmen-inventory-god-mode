@@ -50,3 +50,28 @@ test("strips carriage returns from lines", async () => {
   });
   expect(lines).toEqual(["line1", "line2"]);
 });
+
+test("resolves even when onLine throws on a streamed line", async () => {
+  // A consumer that writes to a closed response stream throws from onLine. If that
+  // escapes, the promise never settles and the caller's finally never releases.
+  const res = await runProcess({
+    command: process.execPath,
+    args: ["-e", "process.stdout.write('a\\nb\\n')"],
+    cwd: process.cwd(),
+    env: process.env,
+    onLine: () => { throw new Error("consumer is gone"); },
+  });
+  expect(res.code).toBe(0);
+});
+
+test("resolves even when onLine throws during the final flush", async () => {
+  // The close handler flushes before resolving; a throw there skipped resolve entirely.
+  const res = await runProcess({
+    command: process.execPath,
+    args: ["-e", "process.stdout.write('no-newline')"],
+    cwd: process.cwd(),
+    env: process.env,
+    onLine: () => { throw new Error("consumer is gone"); },
+  });
+  expect(res.code).toBe(0);
+});

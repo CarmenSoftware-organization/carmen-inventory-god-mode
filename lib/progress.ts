@@ -15,9 +15,22 @@ export function streamOperation(
   run: (onProgress: OnProgress) => Promise<{ summary: string; redirect?: string }>,
 ): Response {
   const encoder = new TextEncoder();
+  // A consumer can leave (closed tab, navigation, aborted request) while the operation
+  // is still running — it may be mid-transaction, so it is never cancelled with them.
+  // Its progress calls then have nowhere to go, and enqueueing on a closed controller
+  // throws. That throw used to travel back into the operation and skip whatever its
+  // finally was holding, so reporting must be inert once nobody is listening.
+  let live = true;
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const emit = (e: ProgressEvent) => controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
+      const emit = (e: ProgressEvent) => {
+        if (!live) return;
+        try {
+          controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
+        } catch {
+          live = false;
+        }
+      };
       controller.enqueue(encoder.encode(PADDING));
       try {
         const result = await run(emit); // resolves only after COMMIT
@@ -25,9 +38,11 @@ export function streamOperation(
       } catch (err) {
         emit({ type: "error", message: err instanceof Error ? err.message : String(err) });
       } finally {
-        controller.close();
+        live = false;
+        try { controller.close(); } catch { /* the consumer already cancelled it */ }
       }
     },
+    cancel() { live = false; },
   });
   return new Response(stream, {
     headers: {

@@ -46,3 +46,30 @@ test("passes log events through the stream verbatim", async () => {
     { type: "done", summary: "done", redirect: undefined },
   ]);
 });
+
+test("emitting after the consumer cancelled does not throw at the operation", async () => {
+  // Closing the tab mid-run cancels the stream. The operation keeps going (it may be
+  // mid-transaction), so its onProgress calls must be inert rather than explosive:
+  // a throw here escapes into the caller and skips the finally that releases its lock.
+  let threw: unknown = null;
+  let finished = false;
+  const res = streamOperation(async (onProgress) => {
+    onProgress({ type: "log", line: "before cancel", stream: "out" });
+    await new Promise((r) => setTimeout(r, 10));
+    try {
+      onProgress({ type: "log", line: "after cancel", stream: "out" });
+    } catch (err) {
+      threw = err;
+    }
+    finished = true;
+    return { summary: "ran to completion" };
+  });
+
+  const reader = res.body!.getReader();
+  await reader.read();
+  await reader.cancel();
+
+  await new Promise((r) => setTimeout(r, 60));
+  expect(threw).toBeNull();
+  expect(finished).toBe(true);
+});

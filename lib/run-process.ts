@@ -12,6 +12,16 @@ export function runProcess(opts: {
   return new Promise<ProcessResult>((resolve, reject) => {
     const child = spawn(opts.command, opts.args, { cwd: opts.cwd, env: opts.env, shell: false });
 
+    // onLine belongs to the caller and can throw — a response stream that the client
+    // already abandoned is the common case. Such a throw must not escape a stdout
+    // handler or the close handler, where it would leave this promise pending forever
+    // and strand whatever the caller releases when it settles.
+    const report = (line: string, stream: "out" | "err") => {
+      try {
+        opts.onLine(line, stream);
+      } catch { /* a consumer that cannot listen does not get to wedge the child */ }
+    };
+
     const splitter = (stream: "out" | "err") => {
       let buf = "";
       return {
@@ -19,12 +29,12 @@ export function runProcess(opts: {
           buf += chunk;
           let nl: number;
           while ((nl = buf.indexOf("\n")) >= 0) {
-            opts.onLine(buf.slice(0, nl).replace(/\r$/, ""), stream);
+            report(buf.slice(0, nl).replace(/\r$/, ""), stream);
             buf = buf.slice(nl + 1);
           }
         },
         flush() {
-          if (buf.length) { opts.onLine(buf.replace(/\r$/, ""), stream); buf = ""; }
+          if (buf.length) { report(buf.replace(/\r$/, ""), stream); buf = ""; }
         },
       };
     };
@@ -38,6 +48,9 @@ export function runProcess(opts: {
     child.on("error", reject);
     child.stdout.on("error", reject);
     child.stderr.on("error", reject);
-    child.on("close", (code) => { out.flush(); err.flush(); resolve({ code: code ?? 0 }); });
+    child.on("close", (code) => {
+      // Flush first, but resolve no matter what: the exit code is the contract.
+      try { out.flush(); err.flush(); } finally { resolve({ code: code ?? 0 }); }
+    });
   });
 }
