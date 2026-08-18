@@ -9,6 +9,7 @@ points at the real dev DB — treat cascade delete / `DROP SCHEMA` as prod data.
 ## Git
 - **Every change reaches `main` through a branch and a PR** — `fix/…` / `feature/…`, then `gh pr merge` once checks pass. No direct commit or push to `main`, chores and one-line config edits included; a request phrased as "commit and push" still means branch + PR.
 - No `develop` branch exists: PRs target `main`. `UAT` is a separate environment branch, never a PR base unless asked.
+- **One exception: the release commit from `bun run build:bump`**, which commits and tags on `main` and is then pushed directly (`git push origin main && git push origin vX.Y.Z`). Routing it through a PR would tag the branch commit while `main` got the merge commit, leaving the tag pointing at something not on `main` — which is why the script asserts it runs on `main`. Nothing else claims this exception.
 
 ## Commands
 - `bun run dev`/`start` — port **3305** (not 3000), set via `PORT` in the env file. `bun run dev` = `dev:local` (`.env.local`); `bun run dev:prod` uses `.env.prod`; `dev:uat` uses `.env.uat`. `bun run test` (Vitest — never `bun test`), `bun run typecheck`, `bun run lint`.
