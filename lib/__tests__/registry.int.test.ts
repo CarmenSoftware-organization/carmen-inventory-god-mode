@@ -17,16 +17,16 @@ beforeAll(async () => {
     CREATE TABLE "CARMEN_SYSTEM".tb_business_unit (
       id uuid primary key default gen_random_uuid(),
       cluster_id uuid, code text not null, name text not null,
-      is_active boolean default true, db_connection jsonb
+      is_active boolean default true, db_schema varchar
     );
-    INSERT INTO "CARMEN_SYSTEM".tb_business_unit (code, name, db_connection) VALUES
-      ('BLFIFO','Blueledgers (FIFO)', '{"schema":"BL_FIFO"}'::jsonb),
+    INSERT INTO "CARMEN_SYSTEM".tb_business_unit (code, name, db_schema) VALUES
+      ('BLFIFO','Blueledgers (FIFO)', 'BL_FIFO'),
       ('NOSCHEMA','No Schema BU', NULL);
   `);
 });
 afterAll(async () => { await container.stop(); });
 
-test("listBusinessUnits resolves tenant schema from jsonb", async () => {
+test("listBusinessUnits resolves tenant schema from db_schema", async () => {
   const { listBusinessUnits } = await import("@/lib/registry");
   const bus = await listBusinessUnits();
   const fifo = bus.find((b) => b.code === "BLFIFO")!;

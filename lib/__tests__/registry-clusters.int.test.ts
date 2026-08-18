@@ -21,14 +21,14 @@ beforeAll(async () => {
     CREATE TABLE "CARMEN_SYSTEM".tb_business_unit (
       id uuid primary key default gen_random_uuid(),
       cluster_id uuid, code text not null, name text not null,
-      is_active boolean default true, db_connection jsonb
+      is_active boolean default true, db_schema varchar
     );
     INSERT INTO "CARMEN_SYSTEM".tb_cluster (id, code, name, deleted_at) VALUES
       ('11111111-1111-1111-1111-111111111111','CL-A','Alpha',NULL),
       ('22222222-2222-2222-2222-222222222222','CL-B','Beta', now());
-    INSERT INTO "CARMEN_SYSTEM".tb_business_unit (cluster_id, code, name, db_connection) VALUES
-      ('11111111-1111-1111-1111-111111111111','BU1','BU One', '{"schema":"tenant_one"}'::jsonb),
-      ('11111111-1111-1111-1111-111111111111','BU2','BU Two', '{"schema":"tenant_two"}'::jsonb),
+    INSERT INTO "CARMEN_SYSTEM".tb_business_unit (cluster_id, code, name, db_schema) VALUES
+      ('11111111-1111-1111-1111-111111111111','BU1','BU One', 'tenant_one'),
+      ('11111111-1111-1111-1111-111111111111','BU2','BU Two', 'tenant_two'),
       ('11111111-1111-1111-1111-111111111111','BU3','BU Three', NULL);
   `);
 });
