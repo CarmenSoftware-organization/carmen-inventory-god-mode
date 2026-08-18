@@ -11,6 +11,33 @@
 
 <!-- build:bump เขียนร่างจาก commit ไว้ตรงนี้ แก้ให้เป็นภาษาคนก่อนตัดรุ่น -->
 
+## [0.4.0] — 2026-08-18
+
+This file, and a release script that refuses to tag without it.
+
+### Added
+
+**A changelog the release script drafts but does not write** (#25)
+`bun run build:bump` now reads `[Unreleased]` before anything else. Finding it empty, it fills the
+section with a draft built from the commits since the last tag and stops — those lines are commit
+subjects, and the notes here are prose. Rewrite them and run the same command again: the second pass
+moves them under a dated version heading. The draft walks `--first-parent`, so a merged PR is a
+single step and every entry it contributes cites that PR number rather than a commit hash;
+housekeeping types (`chore`, `docs`, `test`, `ci`, `build`, `style`) are left out and counted.
+
+**Release commits carry their own notes** (#25)
+The changelog entry, the version bump, the commit and the tag are one step, so a tag never points at
+a commit whose notes arrive later. This meant taking the commit away from `bun pm version`, which is
+now run with `--no-git-tag-version`: it refuses to run at all while `CHANGELOG.md` holds the edited
+draft, since even a staged file counts as an unclean tree. For the same reason `CHANGELOG.md` is the
+one file the tree guard tolerates as dirty — requiring a commit for it first would put a changelog
+commit on `main` outside a pull request, which the repo's own rule forbids.
+
+### Internal
+
+- Notes for v0.3.1, v0.3.0 and v0.2.0 are backfilled from their GitHub Releases.
+- Tests: 247 → 272.
+
 ## [0.3.1] — 2026-08-18
 
 ### Internal
