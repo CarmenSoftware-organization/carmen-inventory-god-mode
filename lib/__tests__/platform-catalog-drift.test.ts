@@ -31,17 +31,49 @@ test.skipIf(!scripts)(
   },
 );
 
-// Reverse direction: catch a new upstream operator-facing script that nobody
-// wired into the catalog. Scoped to db:seed.* / db:check.* so intentionally
-// unsurfaced scripts (db:generate, db:migrate, db:deploy, db:migrate:reset,
-// build) stay out of scope.
+// Reverse direction: catch a new upstream operator-facing script that nobody wired into the
+// catalog. Every script in the package must be accounted for — either it is in CATALOG, or it
+// is here with a reason. A new upstream script therefore fails this suite by default, which is
+// the point: the old regex only knew the namespaces that existed when it was written, so
+// db:backfill.* appeared upstream and slipped past it in silence.
+//
+// Script names are compared whole rather than parsed, because this package has no single
+// namespace convention: db:seed.x uses a dot, db:tenant-views:apply and db:migrate:reset use
+// a colon. There is nothing reliable to split on.
+const UNSURFACED: Record<string, string> = {
+  build: "not a database operation",
+  test: "not a database operation",
+  "db:generate": "local prisma codegen; nothing to run against a live database",
+  "db:migrate": "prisma migrate dev — interactive, authors migrations; db:deploy is the god-mode path",
+  "db:migrate.database-pool":
+    "one-off backfill; upstream documents the scan/--apply path as dead once migration " +
+    "20260813010000_database_pool_drop_db_connection removed the column it reads",
+  "db:backfill.subscription":
+    "scan-only until --apply; surfacing it needs an apply toggle in the catalog and UI first",
+  "db:backfill.bu-license":
+    "scan-only until --apply; surfacing it needs an apply toggle in the catalog and UI first",
+};
+
 test.skipIf(!scripts)(
-  "every db:seed.* and db:check.* package script is surfaced in the catalog",
+  "every package script is either in the catalog or explicitly unsurfaced",
   () => {
     const catalogRuns = new Set(CATALOG.map((o) => o.run));
-    const unsurfaced = Object.keys(scripts!)
-      .filter((name) => /^db:(seed|check)\./.test(name) && !catalogRuns.has(name))
+    const unaccounted = Object.keys(scripts!)
+      .filter((name) => !catalogRuns.has(name) && UNSURFACED[name] === undefined)
       .sort();
-    expect(unsurfaced).toEqual([]);
+    expect(
+      unaccounted,
+      "new upstream script(s): add each to CATALOG in lib/platform-migrations.ts, " +
+        "or to UNSURFACED above with the reason it stays hidden",
+    ).toEqual([]);
   },
 );
+
+// Keeps the allowlist honest: an entry for a script upstream has since deleted is dead weight
+// that nobody dares remove later, because its reason no longer maps to anything readable.
+test.skipIf(!scripts)("every unsurfaced entry still names a real package script", () => {
+  const stale = Object.keys(UNSURFACED)
+    .filter((name) => scripts![name] === undefined)
+    .sort();
+  expect(stale, "allowlist entries for scripts that no longer exist upstream — delete them").toEqual([]);
+});
