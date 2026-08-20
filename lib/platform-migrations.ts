@@ -53,6 +53,13 @@ export const CATALOG: CatalogOp[] = [
   check("check-endpoint-permission", "db:check.endpoint-permission", "Check: endpoint permission coverage"),
   check("check-api-system-permission", "db:check.api-system-permission", "Check: api-system platform permission coverage"),
 
+  // Not check(): this one writes real rows (deleteMany + create on a live BU's licences)
+  // inside a transaction it always rolls back. Zero net effect, but it takes row locks on
+  // customer data while it runs, so it keeps the confirm-phrase gate that readonly skips.
+  { id: "check-seat-pool-view", group: "check",
+    label: "Check: seat pool view semantics (writes inside a rolled-back tx)",
+    kind: "script", run: "db:check.seat-pool-view", writes: true, destructive: false },
+
   { id: "migrate-reset", group: "danger", label: "DANGER: prisma migrate reset (drops & recreates)",
     kind: "script", run: "db:migrate:reset", writes: true, destructive: true },
 ];
