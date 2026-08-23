@@ -2,6 +2,7 @@ import type { Parameter, TransactionSql } from "postgres";
 import { getSql } from "@/lib/db";
 import { env } from "@/lib/env";
 import { qualified } from "@/lib/sql-guard";
+import { recordAuditEvent } from "@/lib/telemetry";
 
 export type Operation = "INSERT" | "UPDATE" | "DELETE" | "CASCADE_DELETE" | "CREATE_SCHEMA" | "DROP_SCHEMA" | "RAW_SQL" | "SOFT_DELETE" | "RESTORE" | "MIGRATION";
 export type AuditEntry = { actor: string; schemaName: string; tableName: string | null; operation: Operation; pk: unknown; oldValues: unknown; newValues: unknown; statement: string | null };
@@ -44,6 +45,15 @@ export async function writeAudit(tx: TransactionSql, e: AuditEntry): Promise<voi
      e.newValues == null ? null : JSON.stringify(e.newValues),
      e.statement],
   );
+  // ส่งขึ้น SigNoz หลังเขียนตารางสำเร็จเท่านั้น — ถ้าสลับลำดับจะได้ event ของ
+  // operation ที่ transaction ยัง rollback ได้อยู่
+  recordAuditEvent({
+    actor: e.actor,
+    schemaName: e.schemaName,
+    tableName: e.tableName,
+    operation: e.operation,
+    statement: e.statement,
+  });
 }
 
 export async function listAuditPage(
