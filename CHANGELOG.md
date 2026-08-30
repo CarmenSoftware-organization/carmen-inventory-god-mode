@@ -11,6 +11,17 @@
 
 <!-- build:bump เขียนร่างจาก commit ไว้ตรงนี้ แก้ให้เป็นภาษาคนก่อนตัดรุ่น -->
 
+## [0.4.1] — 2026-08-30
+
+### Added
+
+- send audited god-mode operations to SigNoz (a0e1908)
+
+### Fixed
+
+- surface db:seed.license-feature in the migrations catalog (#26)
+- surface db:check.seat-pool-view in the migrations catalog (#28) (dca78ff)
+
 ## [0.4.0] — 2026-08-18
 
 This file, and a release script that refuses to tag without it.
